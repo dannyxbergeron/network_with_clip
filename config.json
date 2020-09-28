@@ -1,0 +1,22 @@
+{
+    "path":
+    {
+        "raw": "data/raw_data",
+        "ref": "data/references",
+        "processed": "data/processed",
+        "tmp": "data/tmp"
+    },
+    "file":
+    {
+        "initial": "P-L-S_sno_interaction_both_side_geocutoff.csv",
+        "gtf": "human_ensembl_87_wo_dup_v3.BB_v3.gtf",
+        "parsed_gtf": "human_ensembl_87_wo_dup_v3.BB_v3.tsv",
+        "gene_bed_biotype": "human_ensembl_87_wo_dup_v3.BB_v3_genes.bed",
+        "snoDB": "snoDB1.1.1_for_hg38_Ensembl_V101_Scottlab_2020.tsv",
+        "man_curated": "manually_curated_multimaps.csv",
+        "multi_ids": "human_ensembl_87_wo_dup_v3.BB_v3.gtf",
+        "single_id": "single_id_P-L-S_sno_both_side_geo.csv",
+        "merged_windows": "merged_P-L-S.tsv",
+        "merged_double": "merged_P-L-S_double_sno.tsv"
+    }
+}
