@@ -4,13 +4,10 @@ configfile: "config.json"
 
 rule all:
     input:
-        single_id = join(config['path']['processed'],
-                         config['file']['single_id']),
-        merged_windows = join(config['path']['processed'],
-                              config['file']['merged_windows']),
-        merged_double = join(config['path']['processed'],
-                                config['file']['merged_double']),
-        tok = 'data/tmp/tok'
+        full_merge = join(config['path']['processed'],
+                          config['file']['full_network_clip']),
+        interactions = join(config['path']['cytoscape'],
+                            config['network_file']['interactions']),
 
 
 rule get_single_id:
@@ -78,10 +75,63 @@ subworkflow RNAplex_analyser:
 
 rule intaRNA:
     input:
-        RNAplex_analyser("../network_with_clip/data/processed/merged_P-L-S_double_sno_intaRNA.tsv")
+        merged_double = join(config['path']['processed'],
+                             config['file']['merged_double']),
+        intaRNA = RNAplex_analyser("../network_with_clip/data/processed/merged_P-L-S_double_sno_intaRNA.tsv")
     output:
-        tok = 'data/tmp/tok'
+        intaRNA_tok = 'data/tmp/intaRNA_tok',
+        merged_double_inta = join(config['path']['processed'],
+                                  config['file']['merged_double_inta']),
     shell:
-        "echo 'intaRNA done !' && touch {output.tok}"
+        "echo 'intaRNA done !' && touch {output.intaRNA_tok}"
 
+subworkflow clip_analysis:
+    workdir:
+        "../Tommy_stuff/dan_new_analysis"
+
+rule process_clip:
+    input:
+        merge_clip = clip_analysis("data_processed/all_merged.bed")
+    output:
+        merge_clip = join(config['path']['clip'],
+                          config['file']['clip_data'])
+    shell:
+        "cp {input.merge_clip} {output.merge_clip}"
+
+
+rule merge_network_and_clip:
+    input:
+        merged_double_inta = join(config['path']['processed'],
+                                  config['file']['merged_double_inta']),
+        merged_clip = join(config['path']['clip'],
+                           config['file']['clip_data'])
+    output:
+        full_merge = join(config['path']['processed'],
+                          config['file']['full_network_clip'])
+    conda:
+        "envs/python.yaml"
+    script:
+        "scripts/network_analysis.py"
+
+rule build_network:
+    input:
+        full_merge = join(config['path']['processed'],
+                          config['file']['full_network_clip']),
+        gene_bed_biotype = join(config['path']['ref'],
+                                config['file']['gene_bed_biotype']),
+    output:
+        interactions = join(config['path']['cytoscape'],
+                            config['network_file']['interactions']),
+        nodes = join(config['path']['cytoscape'],
+                     config['network_file']['nodes']),
+        mapped_clip_only = join(config['path']['processed'],
+                                config['file']['mapped_clip_only']),
+    conda:
+        "envs/python.yaml"
+    script:
+        "scripts/create_network_V2_with_ENCODE_data.py"
+
+
+
+# Include files
 include: "rules/process_ref.smk"

@@ -4,7 +4,9 @@
         "raw": "data/raw_data",
         "ref": "data/references",
         "processed": "data/processed",
-        "tmp": "data/tmp"
+        "clip": "data/clip",
+        "tmp": "data/tmp",
+        "cytoscape": "data/cytoscape"
     },
     "file":
     {
@@ -17,6 +19,15 @@
         "multi_ids": "human_ensembl_87_wo_dup_v3.BB_v3.gtf",
         "single_id": "single_id_P-L-S_sno_both_side_geo.csv",
         "merged_windows": "merged_P-L-S.tsv",
-        "merged_double": "merged_P-L-S_double_sno.tsv"
+        "merged_double": "merged_P-L-S_double_sno.tsv",
+        "merged_double_inta": "merged_P-L-S_double_sno_intaRNA.tsv",
+        "clip_data": "all_merged.bed",
+        "full_network_clip": "full_merged_with_clip.tsv",
+        "mapped_clip_only": "mapped_clip_only.tsv"
+    },
+    "network_file":
+    {
+        "interactions": "all_interactions.siff",
+        "nodes": "node_info.txt"
     }
 }
