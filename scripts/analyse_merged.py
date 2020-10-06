@@ -16,6 +16,7 @@ TRESH = snakemake.params.min_length
 def load_and_filter_df(file):
 
     df = pd.read_csv(file, sep='\t')
+    df[['offset1', 'offset2']] = df[['offset1', 'offset2']] .fillna(value=0)
     df = df.fillna('intergenic')
 
     # ------------------Filters-------------------
@@ -26,6 +27,8 @@ def load_and_filter_df(file):
 
     # remove everything intergenic
     df = df.loc[df.biotype2 != 'intergenic']
+    # remove the intramolecular interactions
+    df = df.loc[df.single_id1 != df.single_id2]
     # ------------------Filters-------------------
 
     return df

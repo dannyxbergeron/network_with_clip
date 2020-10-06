@@ -103,90 +103,9 @@ def create_single_id(df, ref_df):
     new_df['gene_biotype2'] =  new_df['single_id2'].map(id_biotype_dict)
     return new_df
 
+def write_data(single_id_data):
 
-def get_multiple_line_DG(dataframe):
-
-    DG_line_counts = dataframe.groupby('DG')[['chr1']].count().sort_values(
-        by='chr1', axis=0, ascending=False)
-
-    DG_all = list(zip(
-        DG_line_counts.index,
-        DG_line_counts.chr1
-    ))
-    DG_multiple_list = [(x, y) for (x,y) in DG_all if y > 1]
-    DG_single_list = [(x, y) for (x,y) in DG_all if y == 1]
-    print('Number of multiple DG: {}'.format(len(DG_multiple_list)))
-    print('Number of single DG: {}'.format(len(DG_single_list)))
-
-    return np.array(DG_multiple_list), np.array(DG_single_list)
-
-
-def keep_best_overlap(DG_mult, DG_single, data_df_):
-
-    def get_length(df, side):
-        length = [
-            df.at[x, f'end{side}'] - df.at[x, f'start{side}']
-            for x in range(len(df))
-        ]
-        return length
-
-    main_df = data_df_.copy(deep=True)
-    main_df = main_df.loc[main_df.DG.isin(DG_single[:,0])]
-
-    data_df = data_df_.copy(deep=True)
-    data_df = data_df.loc[~(data_df.DG.isin(DG_single[:,0]))]
-
-    counts = 0
-    for dg, num in DG_mult:
-        tmp_df = data_df.loc[data_df.DG == dg]
-        tmp_df.reset_index(drop=True, inplace=True)
-
-        lengths = list(zip(get_length(tmp_df, 1),
-                            get_length(tmp_df, 2)))
-        biotypes = np.array([
-            (tmp_df.at[x, 'gene_biotype1'], tmp_df.at[x, 'gene_biotype2'])
-            for x in range(len(tmp_df))
-        ])
-
-        if len(tmp_df) == 2:
-            if abs(lengths[0][0] - lengths[1][0]) > 10:
-                if 'snoRNA' in biotypes[:,0] and 'snoRNA' not in biotypes[:,1]:
-                    counts+=1
-                    print(f'DG: {dg}', end=' ---------\n')
-                    print(tmp_df[['start1', 'end1', 'gene_name1',
-                                'start2', 'end2', 'gene_name2']])
-                    print(biotypes)
-
-            # elif abs(lengths[0][1] - lengths[1][1]) > 10:
-
-
-    print('total counts:', counts)
-
-
-
-
-
-
-
-        # max_sum_interval = 0
-        # for idx, i in enumerate(tmp_df.index):
-        #     length1 = tmp_df.at[i, 'end1'] - tmp_df.at[i, 'start1']
-        #     length2 = tmp_df.at[i, 'end2'] - tmp_df.at[i, 'start2']
-        #
-        #     sum_interval = length1 + length2
-        #
-        #     if not max_sum_interval or sum_interval > max_sum_interval:
-        #         max_sum_interval = sum_interval
-        #         good_index = idx
-        #
-        # main_df = main_df.append(tmp_df.iloc[good_index], ignore_index=True)
-
-    return main_df
-
-
-def write_filered_data(filtered_df):
-
-    filtered_df.to_csv(out_file, index=None)
+    single_id_data.to_csv(out_file, index=None)
 
 
 def main():
@@ -200,14 +119,7 @@ def main():
     # get_multimap_genes(data_df, annotation_df)
 
     single_id_data = create_single_id(data_df, annotation_df)
-
-    DG_multiple_list, DG_single_list = get_multiple_line_DG(single_id_data)
-
-    filtered_df = keep_best_overlap(DG_multiple_list,
-                                       DG_single_list,
-                                       single_id_data)
-
-    # write_filered_data(filtered_df)
+    write_data(single_id_data)
 
 
 if __name__ == '__main__':

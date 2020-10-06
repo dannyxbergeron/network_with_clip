@@ -242,9 +242,13 @@ def merge_and_return(df, to_merge, multiple_dg_list):
                 tmp_df.gene_name1.iloc[0],
                 tmp_df.gene_id2.iloc[0],
                 tmp_df.gene_name2.iloc[0],
-                exp,
                 tmp_df.single_id1.iloc[0],
                 tmp_df.single_id2.iloc[0],
+                tmp_df.gene_biotype1.iloc[0],
+                tmp_df.gene_biotype2.iloc[0],
+                tmp_df.offset1.iloc[0],
+                tmp_df.offset2.iloc[0],
+                exp,
                 tmp_df.merge_ids.iloc[0],
             ]
 
@@ -266,17 +270,17 @@ def merge_and_return(df, to_merge, multiple_dg_list):
     return final_df
 
 
-def get_single_names(df, file):
-
-    ref_df = pd.read_csv(file, sep='\t')
-
-    df['name1'] = df.single_id1.map(dict(zip(ref_df.gene_id, ref_df.gene_name)))
-    df['name2'] = df.single_id2.map(dict(zip(ref_df.gene_id, ref_df.gene_name)))
-
-    df['biotype1'] = df.single_id1.map(dict(zip(ref_df.gene_id, ref_df.gene_biotype)))
-    df['biotype2'] = df.single_id2.map(dict(zip(ref_df.gene_id, ref_df.gene_biotype)))
-
-    return df
+# def get_single_names(df, file):
+#
+#     ref_df = pd.read_csv(file, sep='\t')
+#
+#     df['name1'] = df.single_id1.map(dict(zip(ref_df.gene_id, ref_df.gene_name)))
+#     df['name2'] = df.single_id2.map(dict(zip(ref_df.gene_id, ref_df.gene_name)))
+#
+#     df['biotype1'] = df.single_id1.map(dict(zip(ref_df.gene_id, ref_df.gene_biotype)))
+#     df['biotype2'] = df.single_id2.map(dict(zip(ref_df.gene_id, ref_df.gene_biotype)))
+#
+#     return df
 
 
 def write_df(df):
@@ -320,9 +324,19 @@ def main():
         'exp',
         'single_id1',
         'single_id2',
+        'gene_name1',
+        'gene_name2',
+        'gene_biotype1',
+        'gene_biotype2',
+        'offset1',
+        'offset2',
     ]]
+    final_df.rename(columns={'gene_biotype1': 'biotype1',
+                             'gene_biotype2': 'biotype2',
+                             'gene_name1': 'name1',
+                             'gene_name2': 'name2'}, inplace=True)
 
-    final_df = get_single_names(final_df, gene_bed_biotype)
+    # final_df = get_single_names(final_df, gene_bed_biotype)
 
     write_df(final_df)
 

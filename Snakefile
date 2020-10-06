@@ -8,10 +8,27 @@ rule all:
                           config['file']['full_network_clip']),
         interactions = join(config['path']['cytoscape'],
                             config['network_file']['interactions']),
+        edges = join(config['path']['cytoscape'],
+                     config['network_file']['edges']),
+
+rule merge_raw_and_filter:
+    input:
+        raw_files = expand(join(config['path']['gab_raw'],
+                            '{SRR}_sno_interaction_snobothside.csv'),
+                            SRR=config['raw_files'].keys())
+    output:
+        initial_file = join(config['path']['raw'],
+                            config['file']['initial'])
+    params:
+
+    conda:
+        "envs/python.yaml"
+    script:
+        "scripts/merge_raw_files.py"
 
 
 rule get_single_id:
-    """ keep the more relevant DG and single_id in case of more that one """
+    """ Get single_id in case of more that one """
     input:
         initial_file = join(config['path']['raw'],
                             config['file']['initial']),
@@ -21,21 +38,39 @@ rule get_single_id:
                            config['file']['man_curated']),
     output:
         single_id = join(config['path']['processed'],
-                        config['file']['single_id'])
+                         config['file']['single_id'])
     params:
         multi = join(config['path']['tmp'],
-                        config['file']['single_id'])
+                     config['file']['single_id'])
     conda:
         "envs/python.yaml"
     script:
-        "scripts/get_single_ID_and_single_DG.py"
+        "scripts/get_single_ID.py"
+
+
+rule get_single_dg:
+    """ Resolve the multiple match per dg """
+    input:
+        single_id = join(config['path']['processed'],
+                         config['file']['single_id'])
+    output:
+        single_id_and_dg = join(config['path']['processed'],
+                                config['file']['single_id_and_dg'])
+    params:
+        min_length = 8,
+        host_max_offset = 10,
+        super_sno_offset = 20 # needed to keep useful info on some interactions
+    conda:
+        "envs/python.yaml"
+    script:
+        "scripts/get_single_dg.py"
 
 
 rule check_overlaps:
     """ Merge the windows together """
     input:
         single_id = join(config['path']['processed'],
-                         config['file']['single_id']),
+                         config['file']['single_id_and_dg']),
         gene_bed_biotype = join(config['path']['ref'],
                                 config['file']['gene_bed_biotype'])
     output:
@@ -45,6 +80,7 @@ rule check_overlaps:
         "envs/python.yaml"
     script:
         "scripts/check_overlaps.py"
+
 
 rule double_and_filter:
     """ Double the entries for snoRNA-snoRNA for further analysis and filter
@@ -73,6 +109,7 @@ subworkflow RNAplex_analyser:
     configfile:
         "../RNAplex_analyser/config.json"
 
+
 rule intaRNA:
     input:
         merged_double = join(config['path']['processed'],
@@ -84,6 +121,7 @@ rule intaRNA:
                                   config['file']['merged_double_inta']),
     shell:
         "echo 'intaRNA done !' && touch {output.intaRNA_tok}"
+
 
 subworkflow clip_analysis:
     workdir:
@@ -113,17 +151,22 @@ rule merge_network_and_clip:
     script:
         "scripts/network_analysis.py"
 
+
 rule build_network:
     input:
         full_merge = join(config['path']['processed'],
                           config['file']['full_network_clip']),
         gene_bed_biotype = join(config['path']['ref'],
                                 config['file']['gene_bed_biotype']),
+        snodb = join(config['path']['ref'],
+                     config['file']['snoDB']),
     output:
         interactions = join(config['path']['cytoscape'],
                             config['network_file']['interactions']),
         nodes = join(config['path']['cytoscape'],
                      config['network_file']['nodes']),
+        edges = join(config['path']['cytoscape'],
+                     config['network_file']['edges']),
         mapped_clip_only = join(config['path']['processed'],
                                 config['file']['mapped_clip_only']),
     conda:
