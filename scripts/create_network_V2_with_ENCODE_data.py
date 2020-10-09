@@ -18,7 +18,10 @@ out_clip_only = snakemake.output.mapped_clip_only
 def load_ref_dict():
 
     df = pd.read_csv(ref_file, sep='\t')
-    return dict(zip(df.gene_name, df.gene_id))
+    dict_ = dict(zip(df.gene_name, df.gene_id))
+    dict_['AARS'] = 'ENSG00000090861'
+    dict_['TROVE2'] = 'ENSG00000116747'
+    return dict_
 
 def load_snodb():
 
@@ -78,6 +81,7 @@ def create_sif(df_, id_name_dict):
     interaction_list = []
     single_int_clip = []
     full_clip = []
+
     for col in df.values:
         chr, start, end, sup, DG, id1, id2, name1, name2, bio1, bio2, h_i, E, p_i, merged_id = col
         pro_edge = 'pr'
@@ -116,7 +120,7 @@ def create_sif(df_, id_name_dict):
     clip_df = pd.DataFrame(single_int_clip, columns=['prot_id', 'prot_name', 'interaction',
                                                'target_id', 'target_name', 'target_biotype',
                                                'target_score', 'target_pValue', 'DG'])
-                                               
+
     # Add the prot data to the siff list
     siff_list += set(zip(clip_df.prot_id, clip_df.interaction, clip_df.target_id))
 
@@ -160,17 +164,11 @@ def create_edges_info(df_, clip_df_):
 
     df = df_.copy(deep=True)
     clip_df = clip_df_.copy(deep=True)
-    print(clip_df.columns)
     clip_df.columns = [
         'single_id1', 'name1', 'interaction_type', 'single_id2',
         'name2', 'biotype2', 'target_score', 'target_pValue', 'DG'
     ]
     df = df.append(clip_df, sort=False)
-    print(df.head())
-    print(df.columns)
-
-
-
 
     df['shared_name'] = df.single_id1 + ' (' + df.interaction_type + \
                             ') ' + df.single_id2

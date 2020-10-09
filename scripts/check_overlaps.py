@@ -246,8 +246,6 @@ def merge_and_return(df, to_merge, multiple_dg_list):
                 tmp_df.single_id2.iloc[0],
                 tmp_df.gene_biotype1.iloc[0],
                 tmp_df.gene_biotype2.iloc[0],
-                tmp_df.offset1.iloc[0],
-                tmp_df.offset2.iloc[0],
                 exp,
                 tmp_df.merge_ids.iloc[0],
             ]
@@ -328,8 +326,6 @@ def main():
         'gene_name2',
         'gene_biotype1',
         'gene_biotype2',
-        'offset1',
-        'offset2',
     ]]
     final_df.rename(columns={'gene_biotype1': 'biotype1',
                              'gene_biotype2': 'biotype2',

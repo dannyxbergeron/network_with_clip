@@ -16,7 +16,6 @@ TRESH = snakemake.params.min_length
 def load_and_filter_df(file):
 
     df = pd.read_csv(file, sep='\t')
-    df[['offset1', 'offset2']] = df[['offset1', 'offset2']] .fillna(value=0)
     df = df.fillna('intergenic')
 
     # ------------------Filters-------------------

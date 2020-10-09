@@ -12,9 +12,8 @@ out_file = snakemake.output.single_id_and_dg
 
 MIN_LENGTH = snakemake.params.min_length
 HOST_MAX_OFF = snakemake.params.host_max_offset
-SUPER_SNO_OFFSET = snakemake.params.super_sno_offset
 
-OFFSETS = defaultdict(dict)
+MASTER_COUNT = 0
 
 
 def get_multiple_line_DG(dataframe):
@@ -42,11 +41,14 @@ def deal_with_two(tmp_df, DG):
     ids = tmp_df[['single_id1', 'single_id2']].values
 
     # Deal with miRNA embeded in snoRNAs
-    if np.count_nonzero(biotypes == 'miRNA') == 1: # 61
-        if np.count_nonzero(biotypes.reshape(2, 2)[:,0] == 'miRNA') == 1:
-            return list(tmp_df.loc[tmp_df.gene_biotype1 == 'snoRNA'].iloc[0])
-        else:
-            return list(tmp_df.loc[tmp_df.gene_biotype2 == 'snoRNA'].iloc[0])
+    if np.count_nonzero(biotypes == 'miRNA') == 1: # 82
+        if np.count_nonzero(biotypes.reshape(2, 2)[:,0] == 'miRNA') == 1: # 30
+            if 'snoRNA' in list(tmp_df.gene_biotype1):
+                return list(tmp_df.loc[tmp_df.gene_biotype1 == 'snoRNA'].values[0])
+            else:
+                return None
+        else: # 52
+            return list(tmp_df.loc[tmp_df.gene_biotype2 == 'snoRNA'].values[0])
 
     def deal_side(side):
 
@@ -56,62 +58,58 @@ def deal_with_two(tmp_df, DG):
         biotypes_other_side = set(tmp['gene_biotype{}'.format(inverse[side])])
 
         # If the two overlapping genes are the targets
-        if np.count_nonzero(tmp_df[f'gene_biotype{side}'].values == 'snoRNA') == 0: # 30
+        if np.count_nonzero(tmp_df[f'gene_biotype{side}'].values == 'snoRNA') == 0: # 29
             # deal with the two small gene overlap
-            if lengths[0] < MIN_LENGTH: return list(tmp.iloc[1]) # 0
-            elif lengths[1] < MIN_LENGTH: return list(tmp.iloc[0]) # 2
+            if lengths[0] < MIN_LENGTH: return list(tmp.iloc[1]) # 6
+            elif lengths[1] < MIN_LENGTH: return list(tmp.iloc[0]) # 13
             # deal with the other and take the bigger interval and add
             # the offset to the dictionnaty for further use
-            if lengths[0] < lengths[1] and not pd.isnull(tmp.at[0, f'gene_name{side}']): idx = 0
+            if lengths[0] > lengths[1] and not pd.isnull(tmp.at[0, f'gene_name{side}']):
+                idx = 0
             else: idx = 1
-            offset = abs(lengths[1] - lengths[0])
-            OFFSETS[side][DG] = offset
             tmp[f'start{side}'] = tmp[f'start{side}'].min()
             tmp[f'end{side}'] = tmp[f'end{side}'].max()
             return list(tmp.iloc[idx])
 
         # If the snoRNA is in the overlapping.
-        elif np.count_nonzero(tmp_df[f'gene_biotype{side}'].values == 'snoRNA') == 1: # 1320
+        elif np.count_nonzero(tmp_df[f'gene_biotype{side}'].values == 'snoRNA') == 1: # 964
             # I still included the ones that are really
             # longer than the snoRNA because otherwise the information is lost since there
             # is no snoRNA on one of the side. Could be filter out later.
-            if biotypes_other_side != {'snoRNA',}: # 722
+            if biotypes_other_side != {'snoRNA',}: # 556
                 if biotypes_side[0] == 'snoRNA' and lengths[0] > MIN_LENGTH: idx = 0
                 elif biotypes_side[1] == 'snoRNA' and lengths[1] > MIN_LENGTH: idx = 1
                 else:
                     return None
-                offset = abs(lengths[1] - lengths[0])
-                OFFSETS[side][DG] = offset
                 tmp[f'start{side}'] = tmp[f'start{side}'].min()
                 tmp[f'end{side}'] = tmp[f'end{side}'].max()
                 return list(tmp.iloc[idx])
 
             # The ones that are overlapping in the target and is a sno-other
             # But that on the other side it's all snoRNA
-            else: # 598
+            else: # 408
                 # Remove the too small intervals
                 if max(lengths) < MIN_LENGTH:
                     return None
 
                 if biotypes_side[0] == 'snoRNA': idx = 0
                 else: idx = 1
+                other_idx = 0 if idx == 1 else 0
 
-                offset = abs(lengths[1] - lengths[0])
                 # If the host gene is significantly greater than the snoRNA
-                if offset > HOST_MAX_OFF: # 46
-                    new_idx = 0 if idx == 1 else 1
+                if lengths[idx] < lengths[other_idx]: # 17
+                    new_idx = other_idx
                     return list(tmp.iloc[new_idx])
                 # If the snoRNA interval is pretty much the same as the host one
-                else: # 550
-                    OFFSETS[side][DG] = offset
+                else: # 384
                     tmp[f'start{side}'] = tmp[f'start{side}'].min()
                     tmp[f'end{side}'] = tmp[f'end{side}'].max()
                     return list(tmp.iloc[idx])
 
 
-    if ids[0][0] == ids[1][0]: # 815
+    if ids[0][0] == ids[1][0]: # 581
         return deal_side(2)
-    elif ids[0][1] == ids[1][1]: # 535
+    elif ids[0][1] == ids[1][1]: # 412
         return deal_side(1)
 
 
@@ -128,30 +126,30 @@ def deal_with_more(tmp_df_, DG):
         biotypes_side = list(tmp[f'gene_biotype{side}'])
         biotype_other_side = set(tmp['gene_biotype{}'.format(inverse[side])])
 
+        tmp[f'start{side}'] = tmp[f'start{side}'].min()
+        tmp[f'end{side}'] = tmp[f'end{side}'].max()
+
         if biotype_other_side == {'snoRNA',}:
-            print(tmp)
             if biotypes_side.count('snoRNA') > 1:
+                idx = -1
+                for i, b in enumerate(biotypes_side):
+                    if b != 'snoRNA':
+                        idx = i
+                        break
+                return list(tmp.iloc[idx])
+            elif biotypes_side.count('snoRNA') == 1: # 0
+                idx = biotypes_side.index('snoRNA')
+                return list(tmp.iloc[idx])
+            else:
                 idx = -1
                 for i, l in enumerate(lengths):
                     if l == max_length:
                         idx = i
-                        break
-                return list(tmp.iloc[idx])
-            else:
-                idx = biotypes_side.index('snoRNA')
-                offset = max_length - lengths[idx]
-                OFFSETS[side][DG] = offset
-                tmp[f'start{side}'] = tmp[f'start{side}'].min()
-                tmp[f'end{side}'] = tmp[f'end{side}'].max()
                 return list(tmp.iloc[idx])
         else:
             if biotypes_side.count('snoRNA') > 1:
                 return None
             idx = biotypes_side.index('snoRNA')
-            offset = max_length - lengths[idx]
-            OFFSETS[side][DG] = offset
-            tmp[f'start{side}'] = tmp[f'start{side}'].min()
-            tmp[f'end{side}'] = tmp[f'end{side}'].max()
             return list(tmp.iloc[idx])
 
     def helper_four(tmp, side):
@@ -160,13 +158,13 @@ def deal_with_more(tmp_df_, DG):
         df.drop_duplicates(inplace=True)
         lengths = list(df[f'end{side}'] - df[f'start{side}'])
         sno_idx = list(df[f'gene_biotype{side}']).index('snoRNA')
-        offset = abs(lengths[0] - lengths[1])
-        if offset < SUPER_SNO_OFFSET and min(lengths) > MIN_LENGTH:
+        other_idx = 1 if sno_idx == 0 else 0
+        if lengths[sno_idx] >= lengths[other_idx]:
             tmp_ = tmp.loc[tmp[f'gene_biotype{side}'] == 'snoRNA']
-            return list(tmp_.index), offset
+            return list(tmp_.index)
         else:
             tmp_ = tmp.loc[tmp[f'gene_biotype{side}'] != 'snoRNA']
-            return list(tmp_.index), 0
+            return list(tmp_.index)
 
     def deal_four():
         tmp = tmp_df.copy(deep=True)
@@ -177,26 +175,20 @@ def deal_with_more(tmp_df_, DG):
 
         if np.count_nonzero(biotypes_left == 'snoRNA') == 2:
             if np.count_nonzero(biotypes_right == 'snoRNA') == 2:
-                left_indices, offset_ = helper_four(tmp, 1)
-                if offset_:
-                    OFFSETS[1][DG] = offset_
+                left_indices = helper_four(tmp, 1)
                 tmp[f'start1'] = tmp[f'start1'].min()
                 tmp[f'end1'] = tmp[f'end1'].max()
                 tmp = tmp.loc[tmp.index.isin(left_indices)]
 
-                right_indices, offset_ = helper_four(tmp, 2)
+                right_indices = helper_four(tmp, 2)
                 right_index = right_indices[0]
-                if offset_:
-                    OFFSETS[2][DG] = offset_
+
                 tmp[f'start2'] = tmp[f'start2'].min()
                 tmp[f'end2'] = tmp[f'end2'].max()
                 tmp = tmp.loc[tmp.index == right_index]
-
                 return list(tmp.iloc[0])
             else:
-                left_indices, offset_ = helper_four(tmp, 1)
-                if offset_:
-                    OFFSETS[1][DG] = offset_
+                left_indices = helper_four(tmp, 1)
                 tmp[f'start1'] = tmp[f'start1'].min()
                 tmp[f'end1'] = tmp[f'end1'].max()
                 tmp = tmp.loc[tmp.index.isin(left_indices)]
@@ -210,9 +202,7 @@ def deal_with_more(tmp_df_, DG):
                         max_l = l
                 return list(tmp.values[idx])
         elif np.count_nonzero(biotypes_right == 'snoRNA') == 2:
-            right_indices, offset_ = helper_four(tmp, 2)
-            if offset_:
-                OFFSETS[2][DG] = offset_
+            right_indices = helper_four(tmp, 2)
             tmp[f'start2'] = tmp[f'start2'].min()
             tmp[f'end2'] = tmp[f'end2'].max()
             tmp = tmp.loc[tmp.index.isin(right_indices)]
@@ -224,10 +214,8 @@ def deal_with_more(tmp_df_, DG):
                 for bio in ['tRNA', 'scaRNA']:
                     if bio in biotypes:
                         idx = biotypes.index(bio)
-                offset = max(lengths) - lengths[idx]
                 tmp[f'start1'] = tmp[f'start1'].min()
                 tmp[f'end1'] = tmp[f'end1'].max()
-                OFFSETS[1][DG] = offset
                 return list(tmp.values[idx])
 
             idx = -1
@@ -242,32 +230,37 @@ def deal_with_more(tmp_df_, DG):
     ids = tmp_df[['single_id1', 'single_id2']].values
 
     # Deal with the one that has only one id on one side
-    if len(set(ids[:,0])) == 1: return deal_side(2)
-    elif len(set(ids[:,1])) == 1: return deal_side(1)
+    if len(set(ids[:,0])) == 1: # 3
+        return deal_side(2)
+    elif len(set(ids[:,1])) == 1: # 7
+        return deal_side(1)
 
     # Deal with the ones that have 4 entries per DG
-    if len(tmp_df) == 4:
+    if len(tmp_df) == 4: # 44
         return deal_four()
 
-    # Deal with the nonsens rest...
-    idx = tmp_df.loc[(tmp_df.gene_biotype1 == 'snoRNA') &
-                        (tmp_df.gene_biotype2 == 'snoRNA')].index[0]
+    # Deal with the nonsens rest... # 6
+    def deal_nonsense(tmp, side):
+        lengths = list(tmp_df[f'end{side}'] - tmp_df[f'start{side}'])
+        max_length = max(lengths)
+        indices = set([i for (i,x) in enumerate(lengths) if x == max_length])
+        return indices
 
-    lengths_left = list(tmp_df[f'end1'] - tmp_df[f'start1'])
-    lengths_right = list(tmp_df[f'end2'] - tmp_df[f'start2'])
+    idx_left = deal_nonsense(tmp_df, 1)
+    idx_right = deal_nonsense(tmp_df, 2)
 
-    offset = max(lengths_left) - lengths_left[idx]
+    idx = list(idx_left.intersection(idx_right))[0]
+
     tmp_df[f'start1'] = tmp_df[f'start1'].min()
     tmp_df[f'end1'] = tmp_df[f'end1'].max()
-    offset = max(lengths_left) - lengths_left[idx]
-    OFFSETS[1][DG] = offset
 
     tmp_df[f'start2'] = tmp_df[f'start2'].min()
     tmp_df[f'end2'] = tmp_df[f'end2'].max()
-    offset = max(lengths_right) - lengths_right[idx]
-    OFFSETS[2][DG] = offset
 
-    return list(tmp_df.values[idx])
+    if 'snoRNA' in list(tmp_df.values[idx]):
+        return list(tmp_df.values[idx])
+    else:
+        return None
 
 
 
@@ -285,13 +278,13 @@ def keep_best_overlap(DG_mult, DG_single, data_df_):
         tmp_df.reset_index(drop=True, inplace=True)
 
         # deal with 2 row per DG
-        if len(tmp_df) == 2: # 1411 in total
+        if len(tmp_df) == 2: # 1075 in total
             DG_info = deal_with_two(tmp_df, dg)
             if DG_info:
                 best_overlap.append(DG_info)
 
         # deal with more than 2 row per DG
-        else:
+        else: # 60
             DG_info = deal_with_more(tmp_df, dg)
             if DG_info:
                 best_overlap.append(DG_info)
@@ -318,10 +311,10 @@ def main():
                                        DG_single_list,
                                        data_df)
 
-    filtered_df['offset1'] = filtered_df.DG.map(OFFSETS[1])
-    filtered_df['offset2'] = filtered_df.DG.map(OFFSETS[2])
 
     filtered_df['exp'] = [x.split('_')[1] for x in list(filtered_df.DG)]
+
+    print(MASTER_COUNT)
 
     write_filered_data(filtered_df)
 
