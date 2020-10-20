@@ -18,3 +18,18 @@ rule viz:
         "../envs/python.yaml"
     script:
         "../scripts/viz_transcripts.py"
+
+
+rule clip_candidates:
+    input:
+        full_merged = join(config['path']['processed'],
+                           config['file']['full_network_clip'])
+    output:
+        tmp_candidates = join(config['path']['tmp'],
+                              config['file']['clip_candidates']),
+        bed_file = join(config['path']['tmp'],
+                        config['file']['clip_candidates_bed'])
+    conda:
+        "../envs/python.yaml"
+    script:
+        "../scripts/clip_candidates.py"

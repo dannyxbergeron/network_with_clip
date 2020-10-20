@@ -89,6 +89,7 @@ def main():
     data_df['offset1'] = data_df.DG.map(full_off_dict[1])
     data_df['offset2'] = data_df.DG.map(full_off_dict[2])
 
+    data_df['offset2'] = data_df['offset2'].fillna(value=0)
 
     # for i in data_df.index:
     #     d1 = data_df.loc[data_df.index == i][['chr1', 'start1', 'end1', 'name1',

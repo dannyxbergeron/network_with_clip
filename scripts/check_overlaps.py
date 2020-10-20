@@ -223,6 +223,9 @@ def merge_and_return(df, to_merge, multiple_dg_list):
             dg = '|'.join(sorted(list(set(tmp_df.DG))))
             exp = '|'.join(sorted(list(set(tmp_df.exp))))
 
+            if len(set(tmp_df.single_id1)) != 1 or len(set(tmp_df.single_id2)) != 1:
+                print(tmp_df[['start1', 'end1', 'gene_name1', 'start2', 'end2', 'gene_name2']])
+
             tmp_list = [
                 tmp_df.chr1.iloc[0],
                 min(tmp_df.start1),

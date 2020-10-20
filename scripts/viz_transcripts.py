@@ -59,6 +59,7 @@ def get_snos(gene_id):
 def load_ref(gene_name):
 
     df = pd.read_csv(parsed_gtf, sep='\t', dtype={'transcript_support_level':float})
+    df = df.fillna(value={'transcript_support_level': 0}) # CHANGED !!!!
 
     gene_id = validate_name(gene_name)
 
@@ -75,7 +76,9 @@ def load_ref(gene_name):
     df = df.loc[(df['feature'] == 'gene') | (df['transcript_support_level'] <= 5)]
     df = df.loc[df.feature.isin(['gene', 'exon', 'transcript'])]
 
-    return df, snos
+    strand = df.values[0][4]
+
+    return df, snos, strand
 
 
 def get_data(gene_name):
@@ -83,7 +86,7 @@ def get_data(gene_name):
     df = pd.read_csv(data_file, sep='\t')
     df = df.loc[df.name2 == gene_name]
     # df = df.loc[df['E'] < 0] #CHANGED
-    df = df[['start2', 'end2', 'name1', 'E']]
+    # df = df[['start2', 'end2', 'name1', 'E']] # CHANGED!!!!
     df.reset_index(inplace=True, drop=True)
 
     return df
@@ -94,8 +97,8 @@ def add_sno_data(sno_data, ax, gene_start, gene_end, yloc, BOX_HEIGHT, off):
     def getHeight(energie, b_h):
         h = energie / -15 * b_h
         if h < 0.2 or str(energie) == "nan":
-            return 0.3
-            # return 0.5  # CHANGED
+            # return 0.3
+            return 0.5  # CHANGED
         elif h > 1:
             return 1
         return h
@@ -109,8 +112,8 @@ def add_sno_data(sno_data, ax, gene_start, gene_end, yloc, BOX_HEIGHT, off):
         height = getHeight(sno_data.at[i, 'E'], BOX_HEIGHT)
         sno_name = sno_data.at[i, 'name1']
 
-        # adjust = gene_end * 0.00075  # just to be able to see the boxes
-        adjust = 0
+        adjust = gene_end * 0.00075  # just to be able to see the boxes
+        # adjust = 0
         rect = Rectangle((start-adjust, yloc-(height / 2)),
                          width + (2 * adjust),
                          height)
@@ -119,6 +122,18 @@ def add_sno_data(sno_data, ax, gene_start, gene_end, yloc, BOX_HEIGHT, off):
                              new_off,
                              BOX_HEIGHT / 8 + corr)
         ax.text(gene_end + off*1.2, legloc + BOX_HEIGHT * 0.01, sno_name)
+
+        if sno_data.at[i, 'host_interaction']:
+            tar_start = sno_data.at[i, 'start1'] - gene_start
+            tar_width = sno_data.at[i, 'end1'] - sno_data.at[i, 'start1']
+            tar_height = height / 2
+
+            tar_rect = Rectangle((tar_start-adjust, yloc - height/2),
+                             tar_width + (2 * adjust),
+                             height / 2)
+            pc = PatchCollection([tar_rect], facecolor=COLORS[i], alpha=.5,
+                             edgecolor=None, zorder=300)
+            ax.add_collection(pc)
 
         pc = PatchCollection([rect, rect_leg], facecolor=COLORS[i], alpha=1,
                              edgecolor=None, zorder=200)
@@ -192,7 +207,7 @@ def graph_transcripts(ax, transcripts, BOX_HEIGHT, STEPS):
     ax.set_title('TPM')
 
 
-def prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS):
+def prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS, strand):
 
     FONTSIZE = 10
     BOX_HEIGHT = 1
@@ -213,6 +228,7 @@ def prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS):
         ax2 = fig.add_subplot(gs[0, :1])
     else:
         fig, ax = plt.subplots(figsize=(16, 8))
+
 
     offset = 0.05 * end
     ax.set_xlim(start - offset, end + 5*offset)
@@ -235,6 +251,7 @@ def prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS):
         tmp.reset_index(inplace=True, drop=True)
 
         t_id = tmp.at[0, 'transcript_id']
+        t_name = tmp.at[0, 'transcript_name']
         biot = tmp.at[0, 'transcript_biotype']
         tsl = tmp.at[0, 'transcript_support_level']
         t_start = tmp.at[0, 'start'] - start_
@@ -245,7 +262,7 @@ def prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS):
 
         ax.hlines(yloc, t_start, t_end, color='#a6bddb')
         ax.text(0, yloc + 0.4 * STEPS,
-                '{} ({}) tsl{}'.format(t_id, biot, int(tsl)),
+                '{} ({}) tsl{} {}'.format(t_id, biot, int(tsl), t_name),
                 fontsize=FONTSIZE)
 
         for e in exon_list:
@@ -277,7 +294,7 @@ def prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS):
     yloc += STEPS
     ax.set_ylim(0, yloc)
     ax.get_yaxis().set_visible(False)
-    ax.set_title(gene_name)
+    ax.set_title(f'{gene_name} (strand {strand})')
 
     if TPM_VALS:
         # graph the transcript part
@@ -291,13 +308,13 @@ def prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS):
 
 def main():
 
-    GOI = 'EIF4A1'
+    GOI = 'RPL23'
     TPM_VALS = True
-    ref_df, sno_in_host = load_ref(GOI)
+    ref_df, sno_in_host, strand = load_ref(GOI)
 
     sno_data = get_data(GOI)
 
-    prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS)
+    prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS, strand)
 
 
 if __name__ == "__main__":

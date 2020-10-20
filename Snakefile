@@ -197,3 +197,6 @@ include: "rules/process_ref.smk"
 
 # Include the vizualisation subflow
 include: "rules/graphs_and_analysis.smk"
+
+# Include the host_interaction part
+include: "rules/host_interactions.smk"

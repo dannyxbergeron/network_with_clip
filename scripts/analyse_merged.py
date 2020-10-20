@@ -43,7 +43,7 @@ def load_refs(snoDB_file, ref_file):
 
 
 
-def flag_host_interactions(df, snodb_df):
+def flag_host_interactions(df, snodb_df, ref_df):
     """Create a positive booleen columns for row with sno-host interaction."""
     snodb_df = snodb_df[['gene_id', 'host gene id']]
     snodb_df = snodb_df.dropna()
@@ -56,7 +56,17 @@ def flag_host_interactions(df, snodb_df):
         if sno_id in snoDB_dict and other_id == snoDB_dict[sno_id]:
             host_col.append(True)
         else:
-            host_col.append(False)
+            tmp = ref_df.loc[ref_df.gene_id == other_id].values
+            chr, start, end, gene_id, gene_name, strand, gene_biotype = tmp[0]
+
+            sno_chr = df.at[i, 'chr1']
+            sno_start = df.at[i, 'start1']
+            sno_end = df.at[i, 'end1']
+
+            if chr == sno_chr and start < sno_start and end > sno_end:
+                host_col.append(True)
+            else:
+                host_col.append(False)
 
     df['host_interaction'] = host_col
 
@@ -132,7 +142,7 @@ def main():
     snodb_df, ref_df = load_refs(sno_df_file, gene_bed_biotype_file)
 
     # Find the sno-host interactions
-    df_with_host = flag_host_interactions(df, snodb_df)
+    df_with_host = flag_host_interactions(df, snodb_df, ref_df)
 
     # find the overlap between 3 methods
     method_ovelap(df_with_host)

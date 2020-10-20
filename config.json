@@ -22,7 +22,8 @@
         "clip": "data/clip",
         "tmp": "data/tmp",
         "cytoscape": "data/cytoscape",
-        "count_matrices": "data/count_matrices"
+        "count_matrices": "data/count_matrices",
+        "sno_host_data": "data/sno_host"
     },
     "file":
     {
@@ -46,7 +47,12 @@
         "merged_double_inta": "merged_P-L-S_double_sno_intaRNA.tsv",
         "clip_data": "all_merged.bed",
         "full_network_clip": "full_merged_with_clip.tsv",
-        "mapped_clip_only": "mapped_clip_only.tsv"
+        "mapped_clip_only": "mapped_clip_only.tsv",
+        "clip_candidates": "clip_candidates_prot_coding.csv",
+        "clip_candidates_bed": "clip_candidates_prot_coding_bed.bed",
+        "sno_host_data": "full_sno_host.tsv",
+        "host_bedgraph": "host_bedgraph.bedgraph",
+        "host_ref": "host_ref.bed"
     },
     "network_file":
     {
