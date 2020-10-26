@@ -52,7 +52,8 @@
         "clip_candidates_bed": "clip_candidates_prot_coding_bed.bed",
         "sno_host_data": "full_sno_host.tsv",
         "host_bedgraph": "host_bedgraph.bedgraph",
-        "host_ref": "host_ref.bed"
+        "host_ref": "host_ref.bed",
+        "cons": "sno_host_with_cons.tsv"
     },
     "network_file":
     {

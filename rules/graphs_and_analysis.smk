@@ -33,3 +33,17 @@ rule clip_candidates:
         "../envs/python.yaml"
     script:
         "../scripts/clip_candidates.py"
+
+
+rule get_stats:
+    input:
+        data_file = join(config['path']['processed'],
+                         config['file']['merged_double_inta']),
+        cons = join(config['path']['sno_host_data'],
+                    config['file']['cons'])
+    output:
+        'stats.tok'
+    conda:
+        "../envs/python.yaml"
+    script:
+        "../scripts/stats_and_graphs.py"

@@ -112,8 +112,8 @@ def add_sno_data(sno_data, ax, gene_start, gene_end, yloc, BOX_HEIGHT, off):
         height = getHeight(sno_data.at[i, 'E'], BOX_HEIGHT)
         sno_name = sno_data.at[i, 'name1']
 
-        adjust = gene_end * 0.00075  # just to be able to see the boxes
-        # adjust = 0
+        # adjust = gene_end * 0.00075  # just to be able to see the boxes
+        adjust = 0
         rect = Rectangle((start-adjust, yloc-(height / 2)),
                          width + (2 * adjust),
                          height)
@@ -308,7 +308,7 @@ def prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS, strand):
 
 def main():
 
-    GOI = 'RPL23'
+    GOI = 'ALPK2'
     TPM_VALS = True
     ref_df, sno_in_host, strand = load_ref(GOI)
 
