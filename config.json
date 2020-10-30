@@ -23,7 +23,9 @@
         "tmp": "data/tmp",
         "cytoscape": "data/cytoscape",
         "count_matrices": "data/count_matrices",
-        "sno_host_data": "data/sno_host"
+        "sno_host_data": "data/sno_host",
+        "tissues_cell_bg": "data/tissues_cell_bedgraph",
+        "beds": "/home/danx/Documents/projects/cell_lines/results/new_annot_results/coco/bedgraph"
     },
     "file":
     {
@@ -53,12 +55,29 @@
         "sno_host_data": "full_sno_host.tsv",
         "host_bedgraph": "host_bedgraph.bedgraph",
         "host_ref": "host_ref.bed",
-        "cons": "sno_host_with_cons.tsv"
+        "cons": "sno_host_with_cons.tsv",
+        "alt_splice": "intra_with_alt_splicing_info.tsv",
+        "introns_sno_in_host": "introns_sno_in_host.bed",
+        "bedgraph_viz": "bedgraph_viz.bed",
+        "ext_ratio": "ext_ratio_intra.tsv"
     },
     "network_file":
     {
         "interactions": "all_interactions.siff",
         "nodes": "node_info.txt",
         "edges": "edge_info.txt"
-    }
+    },
+    "bedgraphs_test": [
+        "Brain_1"
+    ],
+    "bedgraphs": [
+        "Brain_1", "Brain_2", "Brain_3", "brainLam_1", "brainLam_2",
+        "brainLam_3", "Breast_1", "Breast_2", "Breast_3", "Breast_4",
+        "HCT116_1", "HCT116_2", "humanRef_1", "humanRef_2", "humanRef_3",
+        "INOF_1", "Liver_1", "Liver_2", "Liver_3", "MCF7_1", "MCF7_2",
+        "Ovary_1", "Ovary_2", "Ovary_3", "PC3_1", "PC3_2", "Prostate_1",
+        "Prostate_2", "Prostate_3", "SkeletalMuscle_1", "SkeletalMuscle_2",
+        "SkeletalMuscle_3", "SKOV_frg_1", "SKOV_frg_2", "Testis_1",
+        "Testis_2", "Testis_3", "TOV112D_1", "TOV112D_2"
+    ]
 }

@@ -4,18 +4,24 @@ configfile: "config.json"
 
 rule all:
     input:
-        full_merge = join(config['path']['processed'],
-                          config['file']['full_network_clip']),
-        interactions = join(config['path']['cytoscape'],
-                            config['network_file']['interactions']),
-        edges = join(config['path']['cytoscape'],
-                     config['network_file']['edges']),
+        # full_merge = join(config['path']['processed'],
+        #                   config['file']['full_network_clip']),
+        # interactions = join(config['path']['cytoscape'],
+        #                     config['network_file']['interactions']),
+        # edges = join(config['path']['cytoscape'],
+        #              config['network_file']['edges']),
+        beds = expand(join(config['path']['beds'], 'sorted_clean_{bed}.bedgraph'),
+                      bed=config['bedgraphs']),
+        intron_tok = expand(join(config['path']['tissues_cell_bg'],
+                                        'intron_{bed}.bedgraph'),
+                            bed=config['bedgraphs'])
+
 
 rule merge_raw_and_filter:
     input:
         raw_files = expand(join(config['path']['gab_raw'],
-                            '{SRR}_sno_interaction_snobothside.coco.csv'),
-                            SRR=config['raw_files'].keys())
+                                '{SRR}_sno_interaction_snobothside.coco.csv'),
+                           SRR=config['raw_files'].keys())
     output:
         initial_file = join(config['path']['raw'],
                             config['file']['initial'])
@@ -130,7 +136,8 @@ rule intaRNA:
     input:
         merged_double = join(config['path']['processed'],
                              config['file']['merged_double']),
-        intaRNA = RNAplex_analyser("../network_with_clip/data/processed/merged_P-L-S_double_sno_intaRNA.tsv")
+        intaRNA = RNAplex_analyser(
+            "../network_with_clip/data/processed/merged_P-L-S_double_sno_intaRNA.tsv")
     output:
         intaRNA_tok = 'data/tmp/intaRNA_tok',
         merged_double_inta = join(config['path']['processed'],
@@ -189,7 +196,6 @@ rule build_network:
         "envs/python.yaml"
     script:
         "scripts/create_network_V2_with_ENCODE_data.py"
-
 
 
 # Include files

@@ -70,11 +70,57 @@ rule alternative_splicing_intron:
                       config['file']['light_parsed_gtf']),
         snodb = join(config['path']['ref'],
                      config['file']['snoDB']),
-        sno_host = join(config['path']['sno_host_data'],
-                        config['file']['sno_host_data']),
+        cons = join(config['path']['sno_host_data'],
+                    config['file']['cons'])
     output:
-        'alternative_splicing_intron.tok'
+        alt_splice = join(config['path']['sno_host_data'],
+                          config['file']['alt_splice']),
     conda:
         "../envs/python.yaml"
     script:
         "../scripts/alternative_splicing_intron.py"
+
+rule prepare_bedgraph_search:
+    input:
+        alt_splice = join(config['path']['sno_host_data'],
+                          config['file']['alt_splice']),
+    output:
+        introns = join(config['path']['tmp'],
+                       config['file']['introns_sno_in_host']),
+    shell:
+        "colTab -f {input.alt_splice} -c chr1,intron_start,intron_end "
+        "| awk '{{if(NF == 3 && NR > 1){{print \"chr\" $0}}}}' "
+        "| sort -k1,1 -k2,2n -k3,3 "
+        "| uniq "
+        "| awk 'BEGIN{{FS=\"\t\";OFS=\"\t\"}}{{print$1, $2-100, $3+100}}' "
+        "> {output.introns}"
+
+rule get_intron_bed:
+    input:
+        bed = join(config['path']['beds'], 'sorted_clean_{bed}.bedgraph'),
+        introns = join(config['path']['tmp'],
+                       config['file']['introns_sno_in_host']),
+    output:
+        bg = join(config['path']['tissues_cell_bg'],
+                  'intron_{bed}.bedgraph'),
+    conda:
+        "../envs/python.yaml"
+    shell:
+        "set +o pipefail; cat {input.bed} | scripts/getIntronBG {input.introns} "
+        "> {output.bg}"
+
+rule reads_in_extensions:
+    input:
+        alt_splice = join(config['path']['sno_host_data'],
+                          config['file']['alt_splice']),
+        bg = expand(join(config['path']['tissues_cell_bg'], 'intron_{bed}.bedgraph'),
+                    bed=config['bedgraphs'])
+    output:
+        bed_viz = join(config['path']['tmp'],
+                       config['file']['bedgraph_viz']),
+        ext_ratio = join(config['path']['sno_host_data'],
+                         config['file']['ext_ratio']),
+    conda:
+        "../envs/python.yaml"
+    script:
+        "../scripts/reads_in_extensions.py"

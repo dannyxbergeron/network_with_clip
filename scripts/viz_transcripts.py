@@ -21,10 +21,10 @@ sno_host = snakemake.input.sno_host
 
 transcript_tpm = snakemake.input.trans_tpm
 
-COLORS = [ '#6a3d9a', '#ff7f00', '#1f78b4', '#33a02c', '#b15928',
-           '#a6cee3', '#b2df8a', '#fdbf6f', '#cab2d6', '#fb9a99',
-           '#e31a1c', '#ffff99', 'black', 'grey', '#b3de69',
-           '#ccebc5', '#fccde5', '#fb9a99' ]
+COLORS = ['#6a3d9a', '#ff7f00', '#1f78b4', '#33a02c', '#b15928',
+          '#a6cee3', '#b2df8a', '#fdbf6f', '#cab2d6', '#fb9a99',
+          '#e31a1c', '#ffff99', 'black', 'grey', '#b3de69',
+          '#ccebc5', '#fccde5', '#fb9a99']
 
 
 def validate_name(gene_name):
@@ -38,7 +38,8 @@ def validate_name(gene_name):
     with open(multiple_file, 'r') as f:
         multiple = f.read().splitlines()
 
-    if gene_name in multiple: end(gene_name)
+    if gene_name in multiple:
+        end(gene_name)
 
     corresp_df = pd.read_csv(name_id, sep='\t')
     corresp_dict = dict(zip(corresp_df.gene_name, corresp_df.gene_id))
@@ -58,8 +59,8 @@ def get_snos(gene_id):
 
 def load_ref(gene_name):
 
-    df = pd.read_csv(parsed_gtf, sep='\t', dtype={'transcript_support_level':float})
-    df = df.fillna(value={'transcript_support_level': 0}) # CHANGED !!!!
+    df = pd.read_csv(parsed_gtf, sep='\t', dtype={'transcript_support_level': float})
+    df = df.fillna(value={'transcript_support_level': 0})  # CHANGED !!!!
 
     gene_id = validate_name(gene_name)
 
@@ -129,10 +130,10 @@ def add_sno_data(sno_data, ax, gene_start, gene_end, yloc, BOX_HEIGHT, off):
             tar_height = height / 2
 
             tar_rect = Rectangle((tar_start-adjust, yloc - height/2),
-                             tar_width + (2 * adjust),
-                             height / 2)
+                                 tar_width + (2 * adjust),
+                                 height / 2)
             pc = PatchCollection([tar_rect], facecolor=COLORS[i], alpha=.5,
-                             edgecolor=None, zorder=300)
+                                 edgecolor=None, zorder=300)
             ax.add_collection(pc)
 
         pc = PatchCollection([rect, rect_leg], facecolor=COLORS[i], alpha=1,
@@ -161,6 +162,7 @@ def draw_sno_in_host(ax, start_, t_start, t_end,
                     name,
                     fontname='Comic sans ms',
                     fontsize=6)
+
 
 def graph_transcripts(ax, transcripts, BOX_HEIGHT, STEPS):
 
@@ -228,7 +230,6 @@ def prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS, strand):
         ax2 = fig.add_subplot(gs[0, :1])
     else:
         fig, ax = plt.subplots(figsize=(16, 8))
-
 
     offset = 0.05 * end
     ax.set_xlim(start - offset, end + 5*offset)
@@ -308,7 +309,7 @@ def prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS, strand):
 
 def main():
 
-    GOI = 'ALPK2'
+    GOI = 'RPS8'
     TPM_VALS = True
     ref_df, sno_in_host, strand = load_ref(GOI)
 
