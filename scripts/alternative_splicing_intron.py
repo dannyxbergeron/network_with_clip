@@ -138,8 +138,6 @@ def get_sno_intron(snodb_host_dict, prot_cod_df, sno_df_):
         else:
             # snoRNA not in a protein_coding transcript...
             to_remove.append(sno_id)
-            # print(tmp[['gene_name']].values[0][0])
-            # print('---------------------------------')
             continue
 
         exon_df = host_df.loc[(host_df.transcript_id == host_transcript_id)

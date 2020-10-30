@@ -1,3 +1,34 @@
+rule create_sno_host_pair:
+    input:
+        gene_bed = join(config['path']['ref'],
+                                config['file']['gene_bed_biotype']),
+        merged_double = join(config['path']['processed'],
+                             config['file']['merged_double'])
+    output:
+        prot_coding_sno_host = join(config['path']['ref'],
+                                    config['file']['prot_coding_sno_host']),
+    conda:
+        "../envs/python.yaml"
+    script:
+        "../scripts/create_sno_host_pair.py"
+
+
+rule get_sno_intron_loc:
+    input:
+        prot_coding_sno_host = join(config['path']['ref'],
+                                    config['file']['prot_coding_sno_host']),
+        parsed = join(config['path']['ref'],
+                      config['file']['light_parsed_gtf']),
+    output:
+        sno_host_loc = join(config['path']['ref'],
+                            config['file']['prot_cod_sno_host_loc']),
+    conda:
+        "../envs/python.yaml"
+    script:
+        "../scripts/get_sno_intron_loc.py"
+
+# --------------------------------------------------------------------------
+
 rule host_interacting:
     input:
         data_file = join(config['path']['processed'],

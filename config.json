@@ -40,6 +40,8 @@
         "man_curated": "manually_curated_multimaps.csv",
         "multiple_gene_name": "multiple_id_gene_name.txt",
         "name_id": "gene_name_gene_id.txt",
+        "prot_coding_sno_host": "prot_coding_sno_host.tsv",
+        "prot_cod_sno_host_loc": "prot_cod_sno_host_loc.tsv",
         "sno_host": "sno_host.tsv",
         "single_id": "single_id_P-L-S_sno_both_side_geo.csv",
         "single_id_and_dg": "single_id_and_dg_P-L-S_sno_both_side_geo.csv",
