@@ -6,7 +6,6 @@ from pybedtools import BedTool as bt
 data_file = snakemake.input.sno_host
 ref_file = snakemake.input.host_ref
 bedgraph_file = snakemake.input.bedgraph
-tpm_file = snakemake.input.tpm
 
 out_file = snakemake.output.cons
 
@@ -62,6 +61,8 @@ def get_intron(df_, ref_df):
 
 def compute_intron_portion(df_):
 
+    CONSERVATION_OFFSET = 2
+
     df = df_.copy(deep=True)
     df['int_portion_start1'] = ''
     df['int_portion_start2'] = ''
@@ -74,8 +75,8 @@ def compute_intron_portion(df_):
         tmp_start = max(df.at[i, f'start{num}'],  df.at[i, f'intron_start{num}'])
         tmp_end = min(df.at[i, f'end{num}'],  df.at[i, f'intron_end{num}'])
 
-        sno_start = df.at[i, 'sno_start']
-        sno_end = df.at[i, 'sno_end']
+        sno_start = df.at[i, 'sno_start'] - CONSERVATION_OFFSET
+        sno_end = df.at[i, 'sno_end'] + CONSERVATION_OFFSET
 
         if tmp_start > sno_start and tmp_start < sno_end:
             tmp_start = sno_end
@@ -197,12 +198,6 @@ def main():
     df = compute_intron_portion(df)
 
     df = get_cons(df, bedgraph_df)
-
-    tpm_df = load_df(tpm_file)
-    tpm_dict = create_tpm_dict(tpm_df)
-
-    df['sno_tpm'] = df['single_id1'].map(tpm_dict)
-    df['target_tpm'] = df['single_id2'].map(tpm_dict)
 
     write(df)
 

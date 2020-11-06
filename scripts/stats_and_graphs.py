@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 in_file = snakemake.input.data_file
-cons_file = snakemake.input.cons
+ext_ratio_file = snakemake.input.ext_ratio
 
 def load_df():
     df = pd.read_csv(in_file, sep='\t')
@@ -25,7 +25,7 @@ def load_df():
     return df
 
 
-def stats(df, cons_df):
+def stats(df, ext_df):
 
     # ----------------- Interacting biotypes --------------------
     print('============= all interactions count ================')
@@ -44,18 +44,18 @@ def stats(df, cons_df):
 
     # 10 were lost because of their nonsens thing (either not the good
     # overlapping gene or just no protein_coding transcript...)
-    print('Number of filtered sno-protein_coding interactions: {}'.format(len(cons_df)))
-    # print(set(df.loc[df.filtered_biotype2 == 'protein_coding'].DG)- set(cons_df.DG))
+    print('Number of filtered sno-protein_coding interactions: {}'.format(len(ext_df)))
+    # print(set(df.loc[df.filtered_biotype2 == 'protein_coding'].DG)- set(ext_df.DG))
 
-    intra_df = cons_df.loc[cons_df.interaction_type == 'intra']
+    intra_df = ext_df.loc[ext_df.interaction_type == 'intra']
     print('Number of intra interactions: {}'.format(len(intra_df)))
 
     sno_host = intra_df.drop_duplicates(subset=['merged_name'])
     print('Number of sno_host involved: {}'.format(len(sno_host)), end='\n\n')
     # print(list(sno_host.single_id2))
 
-    intra_df = intra_df.loc[intra_df.other_mean_cons >= 0.2]
-    print('Number interations showing some kind of conservation (>= 0.2): {}'.format(len(intra_df)))
+    intra_df = intra_df.loc[intra_df.other_mean_cons >= 0.1]
+    print('Number interations showing some kind of conservation (>= 0.1): {}'.format(len(intra_df)))
 
     intra_df_filt = intra_df.drop_duplicates(subset=['merged_name'])
     print('Number of sno_host involved: {}'.format(len(intra_df_filt)), end='\n\n')
@@ -76,11 +76,11 @@ def stats(df, cons_df):
 
     intra_df.other_len_cons = intra_df.other_len_cons.map(int)
     intra_df.other_len_cons = intra_df.other_len_cons.map(int)
-    print(intra_df[['name1', 'name2', 'E', 'other_len_cons', 'other_mean_cons',
-                    'sno_tpm', 'target_tpm']])
+    print(intra_df[['name1', 'name2', 'support', 'E', 'other_len_cons', 'other_mean_cons',
+                    'splice_dist', 'ext_ratio', 'sno_tpm', 'host_tpm']])
 
     print('\n----------------------------------------------------------------------')
-    print(cons_df.columns)
+    print(ext_df.columns)
 
     # ----------------- gene_host_interactions --------------------
 
@@ -88,9 +88,9 @@ def stats(df, cons_df):
 def main():
 
     df = load_df()
-    cons_df = pd.read_csv(cons_file, sep='\t')
+    ext_ratio_df = pd.read_csv(ext_ratio_file, sep='\t')
 
-    stats(df, cons_df)
+    stats(df, ext_ratio_df)
 
 
 

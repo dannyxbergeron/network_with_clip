@@ -5,8 +5,10 @@ from pybedtools import BedTool as bt
 
 parsed_file = snakemake.input.parsed
 sno_host_file = snakemake.input.prot_coding_sno_host
+tpm_file = snakemake.input.tpm
 
 out_file = snakemake.output.sno_host_loc
+sno_all_transcripts = snakemake.output.sno_all_transcripts
 
 
 def load_df(file):
@@ -164,6 +166,33 @@ def get_sno_intron(snodb_host_dict, prot_cod_df, sno_df_):
     return filt_sno_df
 
 
+def create_tpm_dict(df_):
+
+    df = df_.copy(deep=True)
+    df.drop(columns=['gene_name', 'SKOV_nf_1', 'SKOV_nf_2'], inplace=True)
+    df['avg'] = df.mean(axis=1)
+
+    return dict(zip(df.gene_id, df['avg']))
+
+
+def write_transcripts(sno_df, prot_cod_df):
+
+    transcripts_df = prot_cod_df.loc[(prot_cod_df.transcript_id.isin(sno_df.host_transcript_id))
+                                     & (prot_cod_df.feature == 'transcript')]
+
+    transcripts_df['chr'] = transcripts_df['chr'].map(str)
+    transcripts_df['chr'] = 'chr' + transcripts_df['chr']
+
+    transcripts_df = transcripts_df.sort_values(['chr', 'start', 'end']).drop_duplicates()
+    print(transcripts_df.columns)
+    transcripts_df = transcripts_df[['chr', 'start', 'end', 'gene_id']]
+
+
+    transcripts_df.to_csv(sno_all_transcripts, sep='\t', index=False, header=False)
+
+    print(len(transcripts_df))
+
+
 def main():
 
     gtf_df = load_df(parsed_file)
@@ -174,7 +203,14 @@ def main():
 
     sno_df = get_sno_intron(snodb_host_dict, prot_cod_df, sno_df)
 
+    tpm_df = load_df(tpm_file)
+    tpm_dict = create_tpm_dict(tpm_df)
+    sno_df['sno_tpm'] = sno_df['gene_id'].map(tpm_dict)
+    sno_df['target_tpm'] = sno_df['host_id'].map(tpm_dict)
+
     sno_df.to_csv(out_file, sep='\t', index=False)
+
+    write_transcripts(sno_df, prot_cod_df)
 
 
 

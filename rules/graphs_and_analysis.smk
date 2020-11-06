@@ -39,11 +39,23 @@ rule get_stats:
     input:
         data_file = join(config['path']['processed'],
                          config['file']['merged_double_inta']),
-        cons = join(config['path']['sno_host_data'],
-                    config['file']['cons'])
+        ext_ratio = join(config['path']['sno_host_data'],
+                         config['file']['ext_ratio']),
     output:
         'stats.tok'
     conda:
         "../envs/python.yaml"
     script:
         "../scripts/stats_and_graphs.py"
+
+
+rule graph_merged:
+    input:
+        data_file = join(config['path']['processed'],
+                         config['file']['merged_double_inta']),
+    output:
+        'graph_merged.tok'
+    conda:
+        "../envs/python.yaml"
+    script:
+        "../scripts/graph_merged.py"

@@ -14,7 +14,9 @@ rule all:
                       bed=config['bedgraphs']),
         intron_tok = expand(join(config['path']['tissues_cell_bg'],
                                         'intron_{bed}.bedgraph'),
-                            bed=config['bedgraphs'])
+                            bed=config['bedgraphs']),
+        ext_ratio = join(config['path']['sno_host_data'],
+                         config['file']['ext_ratio']),
 
 
 rule merge_raw_and_filter:
@@ -25,8 +27,6 @@ rule merge_raw_and_filter:
     output:
         initial_file = join(config['path']['raw'],
                             config['file']['initial'])
-    params:
-
     conda:
         "envs/python.yaml"
     script:

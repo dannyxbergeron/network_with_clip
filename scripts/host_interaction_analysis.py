@@ -5,6 +5,7 @@ from pybedtools import BedTool as bt
 
 file = snakemake.input.data_file
 parsed_gtf_file = snakemake.input.parsed_gtf
+sno_host_loc_file = snakemake.input.sno_host_loc
 
 out_file = snakemake.output.sno_host
 out_ref = snakemake.output.host_ref
@@ -20,6 +21,10 @@ def load_df():
     sno_ids = list(df.single_id1)
     return df, host_ids, sno_ids
 
+def load_sno_host_loc(file):
+    df = pd.read_csv(sno_host_loc_file, sep='\t')
+    return df
+
 def load_ref(host_ids, sno_ids):
     df = pd.read_csv(parsed_gtf_file, sep='\t', dtype={'seqname':'str'})
     df = df[['seqname', 'feature', 'gene_id', 'start', 'end', 'strand', 'transcript_name',
@@ -28,6 +33,7 @@ def load_ref(host_ids, sno_ids):
     df = df.loc[df.gene_id.isin(host_ids+sno_ids)]
 
     return df
+
 
 def bedtools(df1, df2):
 
@@ -69,7 +75,7 @@ def get_pos(df_):
     return sno_info, tar_info
 
 
-def get_intron(df, ref_df):
+def get_intron(df, ref_df, snoHostLoc_df):
 
     def create_introns(df):
         master_list = []
@@ -91,48 +97,49 @@ def get_intron(df, ref_df):
         return pd.DataFrame(master_list, columns=df.columns)
 
 
+    sno_host_dict = dict(zip(snoHostLoc_df.gene_id, snoHostLoc_df.host_id))
+    sno_host_trans_id_dict = dict(zip(snoHostLoc_df.gene_id,
+                                      snoHostLoc_df.host_transcript_id))
+    sno_host_trans_name_dict = dict(zip(snoHostLoc_df.gene_id,
+                                      snoHostLoc_df.host_name))
+
+    df = df.loc[df.single_id1.isin(snoHostLoc_df.gene_id)]
+
     bt_df_ready = df[['chr2', 'start2', 'end2', 'name2', 'DG', 'strand2']].copy(deep=True)
     bt_df_ready['name2'] = 'target'
     bt_df_sno = df[['chr1', 'start1', 'end1', 'name1', 'DG', 'strand1']].copy(deep=True)
     bt_df_sno['name1'] = 'sno'
     bt_df_sno.columns = bt_df_ready.columns
 
-    to_remove = []
-    all_sno_pos = []
     all_target_pos = []
+    all_sno_pos = []
     host_transcript_info = []
+    to_remove = []
     MASTER_HOST_REF = []
     for idx in df.index:
+        DG = df.at[idx, 'DG']
+        sno_id = df.at[idx, 'single_id1']
         host_id = df.at[idx, 'single_id2']
-        host_df = ref_df.loc[ref_df.gene_id == host_id]
-        sno_data_start = df.at[idx, 'start1']
-        sno_data_end = df.at[idx, 'end1']
 
-        tmp = host_df.loc[(host_df.feature == 'transcript') &
-                          (host_df.transcript_biotype == 'protein_coding')]
+        test_host_id = sno_host_dict[sno_id]
 
-        if len(tmp) == 0:
-            to_remove.append(host_id)
+        if host_id != test_host_id:
+            to_remove.append(DG)
             continue
 
-        tmp = tmp.sort_values('transcript_name')
+        host_transcript_id = sno_host_trans_id_dict[sno_id]
+        host_transcript_name = sno_host_trans_name_dict[sno_id]
+        host_df = ref_df.loc[ref_df.transcript_id == host_transcript_id]
 
-        for row in tmp.values:
-            start = row[3]
-            end = row[4]
-            if sno_data_start > start and sno_data_end < end:
-                host_transcript_name = row[6]
-                host_transcript_id = row[7]
-                bed = [row[0], row[3], row[4], 0, 'transcript', row[5], row[7]]
-                MASTER_HOST_REF.append(bed)
-                break
+        row = host_df.values[0]
+        bed = [row[0], row[3], row[4], 0, 'transcript', row[5], row[7]]
+        MASTER_HOST_REF.append(bed)
 
-        exon_df = host_df.loc[(host_df.transcript_id == host_transcript_id)
-                              & (host_df.feature == 'exon')]
+        exon_df = host_df.loc[host_df.feature == 'exon']
         exon_df = exon_df[['chr', 'start', 'end', 'exon_number', 'exon_id', 'strand']]
         exon_intron_df = create_introns(exon_df)
 
-        # for the host_ref file
+         # for the host_ref file
         host_ref_df = exon_intron_df.copy(deep=True)
         host_ref_df['transcript_id'] = host_transcript_id
         MASTER_HOST_REF += list(host_ref_df.values)
@@ -144,7 +151,7 @@ def get_intron(df, ref_df):
 
         if len(intersect_df) < 2:
             # print(host_transcript_name)
-            to_remove.append(host_id)
+            to_remove.append(DG)
             continue
 
         sno_pos, target_pos = get_pos(intersect_df)
@@ -156,12 +163,8 @@ def get_intron(df, ref_df):
     all_sno_df = pd.DataFrame(all_sno_pos, columns=['loc1', 'ex_int_num1','ex_int_id1', 'ext_pb1'])
     all_target_df = pd.DataFrame(all_target_pos, columns=['loc2', 'ex_int_num2','ex_int_id2', 'ext_pb2'])
 
-    filtered_df = df.loc[~df.single_id2.isin(to_remove)].copy(deep=True).reset_index(drop=True)
+    filtered_df = df.loc[~df.DG.isin(to_remove)].copy(deep=True).reset_index(drop=True)
     filtered_df = pd.concat([filtered_df, all_sno_df, all_target_df], axis=1)
-
-    host_transcript_info = np.array(host_transcript_info)
-    filtered_df['target_trans_id'] = host_transcript_info[:,0]
-    filtered_df['target_trans_name'] = host_transcript_info[:,1]
 
     cols = ['chr', 'start', 'end', 'ex_num', 'ex_id', 'strand', 'trans_id']
     MASTER_HOST_DF = pd.DataFrame(MASTER_HOST_REF, columns=cols)
@@ -169,6 +172,10 @@ def get_intron(df, ref_df):
     MASTER_HOST_DF.sort_values(['chr', 'start', 'end'], inplace=True)
     MASTER_HOST_DF.drop_duplicates(inplace=True)
     MASTER_HOST_DF.to_csv(out_ref, sep='\t', index=False)
+
+    host_transcript_info = np.array(host_transcript_info)
+    filtered_df['target_trans_id'] = host_transcript_info[:,0]
+    filtered_df['target_trans_name'] = host_transcript_info[:,1]
 
     return filtered_df
 
@@ -224,19 +231,6 @@ def analysis_intra(df_, ref_df):
     df['sno_end'] = df.single_id1.map(dict(zip(ref_df.gene_id,
                                                  ref_df.end)))
     df['sno_length'] = df.sno_end - df.sno_start
-    # df['min_start'] = 0
-    # df['max_end'] = 0
-    #
-    # for i in df.index:
-    #     df.at[i, 'min_start'] = min(df.at[i, 'start1'],
-    #                                 df.at[i, 'sno_start'],
-    #                                 df.at[i, 'start2'])
-    #     df.at[i, 'max_end'] = max(df.at[i, 'end1'],
-    #                               df.at[i, 'sno_end'],
-    #                               df.at[i, 'end2'])
-    #
-    # df['max_length'] = df.max_end - df.min_start
-    # df['length_diff'] = df.max_length - df.sno_length
 
     df.to_csv(out_file, sep='\t', index=False)
 
@@ -244,16 +238,17 @@ def analysis_intra(df_, ref_df):
 def main():
 
     data_df, host_ids, sno_ids = load_df()
+    snoHostLoc_df = load_sno_host_loc(sno_host_loc_file)
 
     ref_df = load_ref(host_ids, sno_ids)
 
-    data_df = get_intron(data_df, ref_df)
+    data_df = get_intron(data_df, ref_df, snoHostLoc_df)
 
     data_df = get_types(data_df)
 
     analysis_intra(data_df, ref_df)
-    # print(data_df)
-    # print(data_df.columns)
+    print(data_df)
+    print(data_df.columns)
 
 
 if __name__ == '__main__':

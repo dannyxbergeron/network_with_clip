@@ -3,16 +3,16 @@ import pandas as pd
 import scipy.stats as stats
 
 import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set_theme()
 
 from pybedtools import BedTool as bt
 
 parsed_file = snakemake.input.parsed
-snodb_file = snakemake.input.snodb
+sno_host_loc_file = snakemake.input.sno_host_loc
 sno_host_file = snakemake.input.cons
 
 out_file = snakemake.output.alt_splice
-
-THRES = 300
 
 
 def load_df(file):
@@ -23,26 +23,21 @@ def load_df(file):
     return df
 
 
-def get_sno_and_host(gtf_df, snodb_df, sno_host_df):
+def get_sno_and_host(gtf_df, sno_host_loc_df):
 
     sno_df = gtf_df.loc[(gtf_df.gene_biotype == 'snoRNA') & (gtf_df.feature == 'gene')]
     prot_cod_df = gtf_df.loc[gtf_df.gene_biotype == 'protein_coding']
 
-    snoRNA_ids = set(sno_df.gene_id)
+    snoRNA_ids = set(sno_host_loc_df.gene_id)
     protein_coding_set = set(prot_cod_df.gene_id)
 
-    snodb_df = snodb_df.loc[(snodb_df.gene_id_annot2020.isin(snoRNA_ids)) &
-                            (snodb_df['host gene id'].isin(protein_coding_set))]
-
-    snodb_dict = dict(zip(snodb_df.gene_id_annot2020, snodb_df['host gene id']))
-    # CHANGED !!!!!!!!!!!!!!!!!!!
-    snodb_dict.update(dict(zip(sno_host_df.single_id1, sno_host_df.single_id2)))
+    sno_host_dict = dict(zip(sno_host_loc_df.gene_id, sno_host_loc_df.host_id))
 
     colnames = ['seqname', 'start', 'end', 'gene_id', 'gene_name', 'strand']
-    sno_df = sno_df.loc[sno_df.gene_id.isin(snodb_dict.keys())][colnames]
-    prot_cod_df = prot_cod_df.loc[prot_cod_df.gene_id.isin(snodb_dict.values())]
+    sno_df = sno_df.loc[sno_df.gene_id.isin(sno_host_dict.keys())][colnames]
+    prot_cod_df = prot_cod_df.loc[prot_cod_df.gene_id.isin(sno_host_dict.values())]
 
-    return snodb_dict, prot_cod_df, sno_df
+    return sno_host_dict, prot_cod_df, sno_df
 
 
 def create_introns(df):
@@ -101,75 +96,30 @@ def get_modulation(int_start, int_end, full_intron_exon_df, bt1_):
     return False, np.nan
 
 
-def get_sno_intron(snodb_host_dict, prot_cod_df, sno_df_):
+def get_sno_intron(sno_host_dict, prot_cod_df, sno_df_, sno_host_loc_df):
 
     sno_df = sno_df_.copy(deep=True)
     ref_df = prot_cod_df.copy(deep=True)
 
-    intron_start = []
-    intron_end = []
-    to_remove = []
+    intron_start = dict(zip(sno_host_loc_df.gene_id, sno_host_loc_df.intron_start))
+    intron_end = dict(zip(sno_host_loc_df.gene_id, sno_host_loc_df.intron_end))
+    snoId_transId_dict = dict(zip(sno_host_loc_df.gene_id, sno_host_loc_df.host_transcript_id))
+    snoId_transName_dict = dict(zip(sno_host_loc_df.gene_id, sno_host_loc_df.host_transcript_name))
+
     splicing_modulation = []
     distances = []
     for idx in sno_df.index:
         sno_id = sno_df.at[idx, 'gene_id']
         sno_name = sno_df.at[idx, 'gene_name']
-        host_id = snodb_host_dict[sno_id]
+        host_id = sno_host_dict[sno_id]
         host_df = ref_df.loc[ref_df.gene_id == host_id]
         sno_data_start = sno_df.at[idx, 'start']
         sno_data_end = sno_df.at[idx, 'end']
 
-        tmp = host_df.loc[(host_df.feature == 'transcript') &
-                          (host_df.transcript_biotype == 'protein_coding')]
-
-        if len(tmp) == 0:
-            # no protein_coding transcript for this gene...
-            to_remove.append(sno_id)
-            continue
-
-        tmp = tmp.sort_values('transcript_name')
-
-        tmp_values = tmp[['start', 'end', 'transcript_id', 'transcript_name']].values
-        for start, end, transcript_id, transcript_name in tmp_values:
-            if sno_data_start > start and sno_data_end < end:
-                host_transcript_name = transcript_name
-                host_transcript_id = transcript_id
-                break
-        else:
-            # snoRNA not in a protein_coding transcript...
-            to_remove.append(sno_id)
-            continue
-
-        exon_df = host_df.loc[(host_df.transcript_id == host_transcript_id)
-                              & (host_df.feature == 'exon')]
-        exon_df = exon_df[['seqname', 'start', 'end', 'exon_number', 'exon_id', 'strand']]
-        exon_intron_df = create_introns(exon_df)
+        int_start = intron_start[sno_id]
+        int_end = intron_end[sno_id]
 
         bt1 = sno_df.loc[sno_df.index == idx]
-        bt2 = exon_intron_df
-
-        intersect_df = bedtools(bt1, bt2)
-
-        # snoRNA not the same strand as the host...
-        if len(intersect_df) < 1:
-            to_remove.append(sno_id)
-            continue
-
-        # snoRNA in an exon
-        if 'intron' not in intersect_df['exon_id'].values[0]:
-            to_remove.append(sno_id)
-            continue
-
-        # snoRNA partly in an exon
-        if len(intersect_df) > 1:
-            to_remove.append(sno_id)
-            continue
-
-        int_start = intersect_df.start2.values[0]
-        int_end = intersect_df.end2.values[0]
-
-        intron_start.append(int_start)
-        intron_end.append(int_end)
 
         full_exon_df = host_df.loc[host_df.feature == 'exon']
         full_exon_df = full_exon_df[['seqname', 'start', 'end', 'exon_number', 'exon_id', 'strand']]
@@ -179,18 +129,18 @@ def get_sno_intron(snodb_host_dict, prot_cod_df, sno_df_):
         distances.append(distance)
         splicing_modulation.append(s_module)
 
-    to_remove_set = set(to_remove)
-    filt_sno_df = sno_df.loc[~sno_df.gene_id.isin(to_remove_set)].copy(deep=True)
-    filt_sno_df['host'] = filt_sno_df.gene_id.map(snodb_host_dict)
-    filt_sno_df['intron_start'] = intron_start
-    filt_sno_df['intron_end'] = intron_end
+
+    filt_sno_df = sno_df.copy(deep=True)
+    filt_sno_df['host'] = filt_sno_df.gene_id.map(sno_host_dict)
+    filt_sno_df['intron_start'] = filt_sno_df.gene_id.map(intron_start)
+    filt_sno_df['intron_end'] = filt_sno_df.gene_id.map(intron_end)
     filt_sno_df['splicing_hypothesis'] = splicing_modulation
     filt_sno_df['distance'] = distances
 
     print('==================================')
     print('len original: {}, len filtered: {}'.format(len(sno_df), len(filt_sno_df)))
     original = sno_df.copy(deep=True)
-    original['host'] = original.gene_id.map(snodb_host_dict)
+    original['host'] = original.gene_id.map(sno_host_dict)
     print('Original nb of hosts:{}, filtered nb: {}'.format(len(set(original.host)),
                                                             len(set(filt_sno_df.host))))
     print('==================================')
@@ -245,29 +195,32 @@ def graph(df):
 
     # Data
     r = list(range(len(df)))
+    bar_width = 0.30
 
-    fig, axes = plt.subplots(1, 2, figsize=(12, 8))
-    barWidth = 0.85
+    # fig, axes = plt.subplots(1, 2, figsize=(12, 8))
+    fig, ax = plt.subplots(figsize=(12, 8))
+    barWidths = [bar_width, -bar_width]
     names = [str(x) for x in df.thres]
     colnames = [('net_true', 'nb_net'), ('other_true', 'nb_other')]
-    colors = ['blue', 'red']
+    colors = ['#377eb8', '#e41a1c']
     titles = ['snoRNA interacting with their host intron\nwith possible alternative splicing',
               'Other snoRNA with a possible alternative splicing']
-    for (pos, nb), ax, color, title in zip(colnames, axes, colors, titles):
+    labels = ['snoRNA-host interacting', 'snoRNA-host not interacting']
+    for (pos, nb), barWidth, color, label, title in zip(colnames, barWidths, colors, labels, titles):
 
         pos = df[pos] / df[nb] * 100
         rest = 100 - pos
 
-        ax.bar(r, pos, color=color, edgecolor='white', width=barWidth, label='Positive')
-        ax.bar(r, rest, bottom=pos, color='grey',
-               edgecolor='white', width=barWidth, label='rest')
+        ax.bar(r, pos, color=color, edgecolor='white', align='edge', width=barWidth, label=label)
+        # ax.bar(r, rest, bottom=pos, color='grey',
+        #        edgecolor='white', width=barWidth, align='edge')
         ax.set_title(title)
 
         # Custom x axis
         ax.set_xticks(r)
         ax.set_xticklabels(names)
 
-        ax.set_xlabel("Distance of the splicing event from the snoRNA (pb)")
+        ax.set_xlabel("Maximum distance of the splicing event from the snoRNA (pb)")
         ax.set_ylabel("% of snoRNA")
 
         ax.legend()
@@ -288,7 +241,7 @@ def graph_cumsum(df_, net_sno):
 
     fig, axes = plt.subplots(figsize=(12, 8))
     dfs = [net_df, other_df]
-    colors = ['blue', 'red']
+    colors = ['#377eb8', '#e41a1c']
     labels = ['snoRNA-host interacting', 'snoRNA-host not interacting']
 
     for df, color, label in zip(dfs, colors, labels):
@@ -310,7 +263,7 @@ def graph_cumsum(df_, net_sno):
 
         plt.plot(x, y, color=color, label=label, linewidth=3)
 
-    plt.grid(b=True, which='major', color='lightgray', linestyle='-')
+    # plt.grid(b=True, which='major', color='lightgray', linestyle='-')
     plt.title('snoRNA splicing modulation potential')
     plt.xlabel('Distance from the closest splicing event')
     plt.ylabel('Cumulative % of snoRNA')
@@ -321,13 +274,14 @@ def graph_cumsum(df_, net_sno):
 def main():
 
     gtf_df = load_df(parsed_file)
-    snodb_df = load_df(snodb_file)
+    sno_host_loc_df = load_df(sno_host_loc_file)
     sno_host_df = load_df(sno_host_file)
+    # better but weird if removed... #CHANGED....
     sno_host_df = sno_host_df.loc[sno_host_df.interaction_type == 'intra']
 
-    snodb_host_dict, prot_cod_df, sno_df = get_sno_and_host(gtf_df, snodb_df, sno_host_df)
+    sno_host_dict, prot_cod_df, sno_df = get_sno_and_host(gtf_df, sno_host_loc_df)
 
-    sno_df = get_sno_intron(snodb_host_dict, prot_cod_df, sno_df)
+    sno_df = get_sno_intron(sno_host_dict, prot_cod_df, sno_df, sno_host_loc_df)
 
     # Get stats to make a graph
     stats_df = get_stats(sno_df, sno_host_df)
@@ -338,7 +292,6 @@ def main():
     print('===============================================================')
     name_id_dict = dict(zip(prot_cod_df.gene_id, prot_cod_df.gene_name))
     sno_df['host_name'] = sno_df['host'].map(name_id_dict)
-    # sno_df = sno_df.loc[sno_df.distance < 500]
     sno_df['in_net'] = np.where(sno_df.gene_id.isin(sno_host_df.single_id1),
                                 True,
                                 False)

@@ -19,22 +19,28 @@ rule get_sno_intron_loc:
                                     config['file']['prot_coding_sno_host']),
         parsed = join(config['path']['ref'],
                       config['file']['light_parsed_gtf']),
+        tpm = join(config['path']['count_matrices'],
+                   config['file']['coco_tpm'])
     output:
         sno_host_loc = join(config['path']['ref'],
                             config['file']['prot_cod_sno_host_loc']),
+        sno_all_transcripts = join(config['path']['ref'],
+                                   config['file']['sno_all_transcripts']),
     conda:
         "../envs/python.yaml"
     script:
         "../scripts/get_sno_intron_loc.py"
 
-# --------------------------------------------------------------------------
+# ==========================================================================
 
 rule host_interacting:
     input:
         data_file = join(config['path']['processed'],
                          config['file']['merged_double_inta']),
         parsed_gtf = join(config['path']['ref'],
-                          config['file']['light_parsed_gtf'])
+                          config['file']['light_parsed_gtf']),
+        sno_host_loc = join(config['path']['ref'],
+                            config['file']['prot_cod_sno_host_loc']),
     output:
         sno_host = join(config['path']['sno_host_data'],
                         config['file']['sno_host_data']),
@@ -46,19 +52,45 @@ rule host_interacting:
         "../scripts/host_interaction_analysis.py"
 
 
-# rule create_bedgraph_cons:
-#     input:
-#         phastconst = '/data/heavy_stuff/phastconst/phastCons100way.BedGraph.gz',
-#         host_ref = join(config['path']['sno_host_data'],
-#                         config['file']['host_ref']),
-#     output:
-#         bedgraph = join(config['path']['sno_host_data'],
-#                         config['file']['host_bedgraph']),
-#     conda:
-#         "../envs/python.yaml"
-#     shell:
-#         "zcat {input.phastconst} | scripts/createConstBedgraph {input.host_ref} > "
-#         "{output.bedgraph}"
+rule create_bedgraph_cons:
+    input:
+        phastconst = '/data/heavy_stuff/phastconst/phastCons100way.BedGraph',
+        sno_all_transcripts = join(config['path']['ref'],
+                                   config['file']['sno_all_transcripts']),
+    output:
+        bedgraph = join(config['path']['sno_host_data'],
+                        config['file']['host_bedgraph']),
+    shell:
+        "bedtools intersect -wb -sorted "
+        "-a {input.sno_all_transcripts} "
+        "-b {input.phastconst} | "
+        "awk 'BEGIN{{FS=\"\t\";OFS=\"\t\"}}{{print$1, $2, $3, $8}}' "
+        "| sort -k1,1 -k2,2n -k3,3n "
+        "| uniq "
+        "> {output.bedgraph}"
+
+
+rule create_simplified_bedgraph_cons:
+    input:
+        bedgraph = join(config['path']['sno_host_data'],
+                        config['file']['host_bedgraph']),
+        sno_host_loc = join(config['path']['ref'],
+                            config['file']['prot_cod_sno_host_loc']),
+    output:
+        simple_bedgraph = join(config['path']['sno_host_data'],
+                        config['file']['simplified_host_bedgraph']),
+    shell:
+        "awk 'BEGIN{{FS=\"\t\";OFS=\"\t\"}}"
+        "{{if(NR > 1)print \"chr\"$1,$9-100,$10+100,$7}}' {input.sno_host_loc} "
+        "| sort -k1,1 -k2,2n -k3,3n > tmp && "
+        "bedtools intersect -wb -sorted "
+        "-a tmp "
+        "-b {input.bedgraph} | "
+        "awk 'BEGIN{{FS=\"\t\";OFS=\"\t\"}}{{print$1, $2, $3, $8}}' "
+        "| sort -k1,1 -k2,2n -k3,3n "
+        "| uniq "
+        "> {output.simple_bedgraph} && "
+        "rm tmp"
 
 
 rule conservation:
@@ -68,9 +100,7 @@ rule conservation:
         host_ref = join(config['path']['sno_host_data'],
                         config['file']['host_ref']),
         bedgraph = join(config['path']['sno_host_data'],
-                        config['file']['host_bedgraph']),
-        tpm = join(config['path']['count_matrices'],
-                   config['file']['coco_tpm'])
+                        config['file']['simplified_host_bedgraph']),
     output:
         cons = join(config['path']['sno_host_data'],
                     config['file']['cons'])
@@ -80,12 +110,29 @@ rule conservation:
         "../scripts/conservation.py"
 
 
+rule other_conservation:
+    input:
+        sno_host_loc = join(config['path']['ref'],
+                            config['file']['prot_cod_sno_host_loc']),
+        bedgraph = join(config['path']['sno_host_data'],
+                        config['file']['simplified_host_bedgraph']),
+        cons = join(config['path']['sno_host_data'],
+                    config['file']['cons'])
+    output:
+        'other_cons.tok'
+    conda:
+        "../envs/python.yaml"
+    script:
+        "../scripts/other_conservation.py"
+
+
+
 rule transcript_per_gene:
     input:
         parsed = join(config['path']['ref'],
                       config['file']['parsed_gtf']),
-        snodb = join(config['path']['ref'],
-                     config['file']['snoDB']),
+        sno_host_loc = join(config['path']['ref'],
+                            config['file']['prot_cod_sno_host_loc']),
         sno_host = join(config['path']['sno_host_data'],
                         config['file']['sno_host_data']),
     output:
@@ -99,8 +146,8 @@ rule alternative_splicing_intron:
     input:
         parsed = join(config['path']['ref'],
                       config['file']['light_parsed_gtf']),
-        snodb = join(config['path']['ref'],
-                     config['file']['snoDB']),
+        sno_host_loc = join(config['path']['ref'],
+                            config['file']['prot_cod_sno_host_loc']),
         cons = join(config['path']['sno_host_data'],
                     config['file']['cons'])
     output:
@@ -111,16 +158,17 @@ rule alternative_splicing_intron:
     script:
         "../scripts/alternative_splicing_intron.py"
 
+
 rule prepare_bedgraph_search:
     input:
-        alt_splice = join(config['path']['sno_host_data'],
-                          config['file']['alt_splice']),
+        sno_host_loc = join(config['path']['ref'],
+                            config['file']['prot_cod_sno_host_loc']),
     output:
         introns = join(config['path']['tmp'],
                        config['file']['introns_sno_in_host']),
     shell:
-        "colTab -f {input.alt_splice} -c chr1,intron_start,intron_end "
-        "| awk '{{if(NF == 3 && NR > 1){{print \"chr\" $0}}}}' "
+        "colTab -f {input.sno_host_loc} -c chr,intron_start,intron_end "
+        "| awk '{{if(NR > 1){{print \"chr\" $0}}}}' "
         "| sort -k1,1 -k2,2n -k3,3 "
         "| uniq "
         "| awk 'BEGIN{{FS=\"\t\";OFS=\"\t\"}}{{print$1, $2-100, $3+100}}' "
@@ -140,10 +188,13 @@ rule get_intron_bed:
         "set +o pipefail; cat {input.bed} | scripts/getIntronBG {input.introns} "
         "> {output.bg}"
 
+
 rule reads_in_extensions:
     input:
         alt_splice = join(config['path']['sno_host_data'],
                           config['file']['alt_splice']),
+        sno_host_loc = join(config['path']['ref'],
+                            config['file']['prot_cod_sno_host_loc']),
         bg = expand(join(config['path']['tissues_cell_bg'], 'intron_{bed}.bedgraph'),
                     bed=config['bedgraphs'])
     output:

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 parsed_file = snakemake.input.parsed
-snodb_file = snakemake.input.snodb
+sno_host_loc_file = snakemake.input.sno_host_loc
 sno_host_file = snakemake.input.sno_host
 
 def load_df(file):
@@ -16,7 +16,7 @@ def load_df(file):
     return df
 
 
-def analyse(gtf_df, snodb_df, sno_host_df):
+def analyse(gtf_df, sno_host_loc_df, sno_host_df):
 
     gtf_df = gtf_df.loc[(gtf_df.feature.isin(['transcript']))
                         & (gtf_df.gene_biotype == 'protein_coding')]
@@ -24,8 +24,7 @@ def analyse(gtf_df, snodb_df, sno_host_df):
     print('Number of total protein_coding genes', len(set(gtf_df.gene_id)))
     print('----------------------------------------------------------')
 
-    host_list = set(snodb_df['host gene id'])
-    host_list = [x for x in host_list if not pd.isna(x)]
+    host_list = set(sno_host_loc_df.host_id)
 
     host_df = gtf_df.loc[gtf_df.gene_id.isin(host_list)]
     non_host_df = gtf_df.loc[~(gtf_df.gene_id.isin(host_list))]
@@ -34,7 +33,7 @@ def analyse(gtf_df, snodb_df, sno_host_df):
     network_host_df = host_df.loc[host_df.gene_id.isin(sno_host_list)]
 
     # host_df = host_df.loc[~(host_df.gene_id.isin(network_host_df.gene_id))] # CHANGED
-    # snoRNA not having the same strand as the host ?? TODO !!!!
+
     host_len_trans = len(host_df)
     host_len_genes = len(set(host_df.gene_id))
 
@@ -88,6 +87,7 @@ def graph(data, nb_genes):
         f'all_snoRNA_hosts ({nb_genes[1]} genes)',
         f'network_snoRNA_host ({nb_genes[2]} genes)'
     ]
+    colors = ['#4daf4a', '#e41a1c', '#377eb8']
 
     for i in range(len(data)):
         data[i] = [x if x <=MAX_VAL else MAX_VAL for x in data[i]]
@@ -95,10 +95,11 @@ def graph(data, nb_genes):
     fig, ax = plt.subplots()
     fig.canvas.draw()
 
-    for label, data in zip(groups[:2], data[:2]):
-        ax = sns.distplot(data, hist = False, kde = True,
-                     kde_kws = {'shade': True, 'linewidth': 1},
-                     label=label, ax=ax)
+    for label, data, color in zip(groups[:2], data[:2], colors[:2]):
+        sns.kdeplot(data=data, shade=True, linewidth=1, alpha=.3,
+                    label=label, ax=ax, bw_adjust=1,
+                    color=color)#, cut=0)
+
 
     tick_labels = [
         int(tick_label)
@@ -117,10 +118,10 @@ def graph(data, nb_genes):
 def main():
 
     gtf_df = load_df(parsed_file)
-    snodb_df = load_df(snodb_file)
+    sno_host_loc_df = load_df(sno_host_loc_file)
     sno_host_df = load_df(sno_host_file)
 
-    all, all_non, network, nb_genes = analyse(gtf_df, snodb_df, sno_host_df)
+    all, all_non, network, nb_genes = analyse(gtf_df, sno_host_loc_df, sno_host_df)
 
     graph([all, all_non, network], nb_genes)
 

@@ -11,28 +11,10 @@ void getCoord(const string& filename, vector<string>& coord)
 {
     ifstream infile(filename);
     string line;
-    int start(0), end, tmpStart, tmpEnd;
 
     while(getline(infile, line))
     {
-        for(int i = 0; i < 3; i++)
-        {
-            end = line.find('\t', start);
-            start = end + 1;
-        }
-        tmpEnd = end;
-
-        for(int i = 0; i < 2; i++)
-        {
-            tmpStart = tmpEnd + 1;
-            tmpEnd = line.find('\t', tmpStart);
-        }
-
-        if(line.substr(tmpStart,tmpEnd - tmpStart) == "transcript")
-        {
-            coord.push_back(line.substr(0, end));
-        }
-        start = 0;
+        coord.push_back(line);
     }
 }
 
@@ -50,6 +32,8 @@ bool splitString(const string& s, string& chr, int& start, int& end)
     beg = find + 1;
     find = s.find('\t', beg);
     end = stoi(s.substr(beg, find - beg));
+
+
 }
 
 
@@ -87,10 +71,14 @@ void keepTranscriptInfo(vector<string>& coord)
             splitString(coord[pos], tChr, tStart, tEnd);
         }
 
-        if(chr == tChr && start > tStart && end < tEnd)
-        {
-            cout << chr << '\t' << start << '\t' << end << '\t' << val << endl;
-        }
+        if(chr == tChr && start >= tStart && end <= tEnd)
+            cout << chr << '\t' << start << '\t' << end << '\t' << val << '\n';
+        else if(chr == tChr && end > tStart && start < tStart)
+            cout << chr << '\t' << tStart << '\t' << end << '\t' << val << '\n';
+        else if(chr == tChr && end > tEnd && start < tEnd)
+            cout << chr << '\t' << start << '\t' << tEnd << '\t' << val << '\n';
+        else if(chr == tChr && end > tEnd && start < tStart)
+            cout << chr << '\t' << tStart << '\t' << tEnd << '\t' << val << '\n';
     }
 }
 
