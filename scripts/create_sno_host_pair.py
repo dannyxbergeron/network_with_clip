@@ -7,6 +7,7 @@ from pybedtools import BedTool as bt
 
 gene_bed = snakemake.input.gene_bed
 merged_double = snakemake.input.merged_double
+sno_db_file = snakemake.input.snodb
 
 out_file = snakemake.output.prot_coding_sno_host
 
@@ -15,24 +16,46 @@ def bedtools(df1, df2):
     first = bt.from_dataframe(df1)
     second = bt.from_dataframe(df2)
     intersect = first.intersect(second, wo=True, s=False, sorted=False)
-    new_cols = ['chr1', 'start1', 'end1', 'gene_id1', 'gene_name1', 'strand1',
-                'chr2', 'start2', 'end2', 'gene_id2', 'gene_name2', 'strand2', 'overlap']
+    new_cols = ['chr1', 'start1', 'end1', 'gene_id1', 'gene_name1', 'strand1', 'biotype1',
+                'chr2', 'start2', 'end2', 'gene_id2', 'gene_name2', 'strand2', 'biotype2', 'overlap']
     intersect_df = intersect.to_dataframe(names=new_cols, index_col=False,
                                           dtype={'chr': str, 'chr2': str})
     return intersect_df
 
 
-def remove_dups(df, network_ids):
+def remove_dups(df, network_ids, snodb_df_, id_name_dict, id_biotype_dict):
 
-    id_name_dict = dict(zip(df.gene_id1, df.gene_name1))
-    id_name_dict.update(dict(zip(df.gene_id2, df.gene_name2)))
+    snodb_df = snodb_df_.copy(deep=True)
+    snodb_df_pc = snodb_df.loc[~(pd.isnull(snodb_df['host gene id']))
+                               & (snodb_df.biotype == 'protein_coding')]
+    snodb_dict_pc = dict(zip(snodb_df_pc.gene_id_annot2020, snodb_df_pc['host gene id']))
+
+    snodb_host_dict = {
+        k:v for (k,v) in snodb_dict_pc.items()
+        if v in id_biotype_dict
+    }
+    print(snodb_host_dict['ENSG00000201823'])
+
+    snodb_df_other = snodb_df.loc[~(pd.isnull(snodb_df['host gene id']))
+                                    & ~(snodb_df.biotype == 'protein_coding')]
+    sno_db_other_list = list(snodb_df_other.gene_id_annot2020)
 
     counter = Counter(list(df.gene_id1))
-    single = [id for (id, val) in counter.most_common() if val == 1]
+    single = [
+        id for (id, val) in counter.most_common()
+        if val == 1
+        and id not in snodb_host_dict
+        and id not in sno_db_other_list
+    ]
     single_df = df.loc[df.gene_id1.isin(single)]
     single_dict = dict(zip(single_df.gene_id1, single_df.gene_id2))
 
-    multiple = [id for (id, val) in counter.most_common() if val > 1]
+    multiple = [
+        id for (id, val) in counter.most_common()
+        if val > 1
+        and id not in snodb_host_dict
+        and id not in sno_db_other_list
+    ]
 
     multiple_df = df.loc[df.gene_id1.isin(multiple)]
 
@@ -41,11 +64,10 @@ def remove_dups(df, network_ids):
         tmp = multiple_df.loc[multiple_df.gene_id1 == m_id]
 
         intersection = network_ids.intersection(set(tmp.gene_id2))
-        if len(intersection) == 1:
+        if len(intersection) == 1 and m_id not in snodb_host_dict:
+            # print(m_id, id_name_dict[m_id])
             good_host[m_id] = list(intersection)[0]
 
-        elif len(intersection) == 2:
-            pass
         else:
             pass
 
@@ -80,9 +102,11 @@ def remove_dups(df, network_ids):
             'NR_145797': 'ENSG00000002822',
             'snoDB765': 'ENSG00000165156',
     }
-    man_curated = {k:v for (k,v) in man_curated.items() if v is not None}
-    good_host.update(man_curated)
+
+    good_host.update(snodb_host_dict)
     good_host.update(single_dict)
+    good_host.update(man_curated)
+    good_host = {k:v for (k,v) in good_host.items() if v is not None}
 
     res_df = pd.DataFrame.from_dict(good_host, orient='index', columns=['host_id'])
     res_df = res_df.reset_index().rename(columns={'index':'sno_id'})
@@ -98,17 +122,23 @@ def main():
 
     ref_df = pd.read_csv(gene_bed, sep='\t')
     data_df = pd.read_csv(merged_double, sep='\t')
+    snodb_df = pd.read_csv(sno_db_file, sep='\t')
 
     network_ids = set(data_df.single_id2)
+    id_biotype_dict = dict(zip(ref_df.gene_id, ref_df.gene_biotype))
+    id_name_dict = dict(zip(ref_df.gene_id, ref_df.gene_name))
 
     sno_df = ref_df.loc[ref_df.gene_biotype == 'snoRNA']
-    sno_df = sno_df.drop(columns=['gene_biotype'])
     prot_coding = ref_df.loc[ref_df.gene_biotype == 'protein_coding']
-    prot_coding = prot_coding.drop(columns=['gene_biotype'])
 
     intersect_df = bedtools(sno_df, prot_coding)
 
-    result = remove_dups(intersect_df, network_ids)
+    result = remove_dups(intersect_df, network_ids, snodb_df,
+                         id_name_dict,id_biotype_dict)
+
+    result['biotype'] = result.host_id.map(id_biotype_dict)
+    result = result.loc[result.biotype == 'protein_coding']
+    result.drop(columns=['biotype'], inplace=True)
 
     result.to_csv(out_file, sep='\t', index=False)
 

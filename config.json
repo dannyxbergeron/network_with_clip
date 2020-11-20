@@ -25,7 +25,8 @@
         "count_matrices": "data/count_matrices",
         "sno_host_data": "data/sno_host",
         "tissues_cell_bg": "data/tissues_cell_bedgraph",
-        "beds": "/home/danx/Documents/projects/cell_lines/results/new_annot_results/coco/bedgraph"
+        "beds": "/home/danx/Documents/projects/cell_lines/results/new_annot_results/coco/bedgraph",
+        "NMD": "data/NMD"
     },
     "file":
     {
@@ -59,11 +60,17 @@
         "host_bedgraph": "host_bedgraph.bedgraph",
         "simplified_host_bedgraph": "simplified_host_bedgraph.bedgraph",
         "host_ref": "host_ref.bed",
+        "pearson": "pearson.tsv",
+        "bio_function": "protein_coding_host_biological_functions.tsv",
         "cons": "sno_host_with_cons.tsv",
         "alt_splice": "intra_with_alt_splicing_info.tsv",
         "introns_sno_in_host": "introns_sno_in_host.bed",
         "bedgraph_viz": "bedgraph_viz.bed",
-        "ext_ratio": "ext_ratio_intra.tsv"
+        "ext_ratio": "ext_ratio_intra.tsv",
+        "NMD_tpm_transcript": "Colombo_new_annot_transcript_tpm.tsv",
+        "transId_geneId_geneName": "transId_geneId_geneName.txt",
+        "sign_trans_nmd": "NMD_KD_rescue_transcripts.tsv",
+        "EIF4A3_CLIP": "modif_hg38_GSM1001331_CLIP2.bg"
     },
     "network_file":
     {

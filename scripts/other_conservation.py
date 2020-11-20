@@ -8,6 +8,7 @@ from scipy.stats import mannwhitneyu as mwu
 
 import matplotlib.pyplot as plt
 import seaborn as sns
+plt.rcParams['svg.fonttype'] = 'none'
 # sns.set_theme()
 
 from pybedtools import BedTool as bt
@@ -15,6 +16,8 @@ from pybedtools import BedTool as bt
 sno_host_file = snakemake.input.sno_host_loc
 bedgraph_file = snakemake.input.bedgraph
 data_file = snakemake.input.cons
+
+svg = snakemake.output.svg
 
 
 def load_df(file):
@@ -185,7 +188,11 @@ def graph(df, ref_df_cons):
     plt.title('Distribution of conservation around snoRNAs')
     plt.xlabel('Average conservation of the regions')
     plt.legend()
-    plt.show()
+    # plt.savefig(svg, format='svg')
+    # plt.show()
+
+    print(list(df['other_mean_cons']))
+    print(list(ref_df_cons['mean_cons']))
 
 
 def main():

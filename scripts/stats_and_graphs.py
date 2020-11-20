@@ -38,7 +38,12 @@ def stats(df, ext_df):
     # ----------------- gene_host_interactions --------------------
     print('============= host interactions count ================')
     df = df.loc[df.host_interaction]
-    print('Nb of snoRNA-host interactions: {}'.format(len(df)), end='\n\n')
+    sno_host_involved = len(set([
+        '_'.join(sorted([x,y]))
+        for x,y in df[['single_id1', 'single_id2']].values
+    ]))
+    print('Nb of snoRNA-host interactions: {}'.format(len(df)))
+    print('Nb of snoRNA-host involved: {}'.format(sno_host_involved), end='\n\n')
     counter = Counter(list(df.filtered_biotype2))
     print(counter.items(), end='\n\n')
 

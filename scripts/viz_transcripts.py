@@ -88,6 +88,7 @@ def get_data(gene_name):
     df = df.loc[df.name2 == gene_name]
     # df = df.loc[df['E'] < 0] #CHANGED
     # df = df[['start2', 'end2', 'name1', 'E']] # CHANGED!!!!
+
     df.reset_index(inplace=True, drop=True)
 
     return df
@@ -143,6 +144,46 @@ def add_sno_data(sno_data, ax, gene_start, gene_end, yloc, BOX_HEIGHT, off):
         legloc -= 0.25 * BOX_HEIGHT + corr
 
 
+    # CUSTOM STUFF FOR EIF4A2 ========================================
+    # starts = [186784929, 186784832, 186784916, 186784817, 186784826, 186784881, 186784796+46, 186784796+46]
+    # ends = [186784950, 186784842, 186784937, 186784843, 186784843, 186784919, 186784796+82, 186784796+64]
+    # s2s = [186784840, 186784889, 186784853, 186784666, 186784893, 186784797, 186784880+34, 186784880+51]
+    # e2s = [186784863, 186784928, 186784864, 186784712, 186784910, 186784879, 186784880+70, 186784880+70]
+    # starts = [186784796+46, 186784796+46]
+    # ends = [186784796+82, 186784796+64]
+    # s2s = [186784880+34, 186784880+51]
+    # e2s = [186784880+70, 186784880+70]
+    # exps = ['P0', 'L0', 'L0', 'L1', 'L1', 'L1', 'IntaRNA']
+    #
+    # i = 4
+    # yloc += 0.1
+    # for s1_, e1_, s2_, e2_, exp_ in zip(starts, ends, s2s, e2s, exps):
+    #     s1 = s1_ - gene_start
+    #     w1 = e1_ - s1_
+    #     s2 = s2_ - gene_start
+    #     w2 = e2_ - s2_
+    #     h = 0.5
+    #     rect = Rectangle((s1, yloc-(h / 2)),
+    #                      w1 + (2 * adjust),
+    #                      h)
+    #     rect_leg = Rectangle((gene_end + new_off, legloc - corr/2),
+    #                          new_off,
+    #                          BOX_HEIGHT / 8 + corr)
+    #     tar_rect = Rectangle((s2, yloc - h/2),
+    #                          w2 + (2 * adjust),
+    #                          h / 2)
+    #     pc = PatchCollection([rect, rect_leg, tar_rect], facecolor=COLORS[i], alpha=.5,
+    #                          edgecolor=None, zorder=400)
+    #
+    #     ax.add_collection(pc)
+    #     ax.text(gene_end + off*1.2, legloc + BOX_HEIGHT * 0.01,
+    #             f'{exp_}-{s1_}-{e1_}|{s2_}-{e2_}')
+    #     legloc -= 0.25 * BOX_HEIGHT + corr
+    #     i+=1
+    #     yloc += 0.1
+    # END OF CUSTOM STUFF FOR EIF4A2 ========================================
+
+
 def draw_sno_in_host(ax, start_, t_start, t_end,
                      sno_in_host, yloc, BOX_HEIGHT, high):
     snos = []
@@ -181,6 +222,13 @@ def graph_transcripts(ax, transcripts, BOX_HEIGHT, STEPS):
     df['std'] = df.std(axis=1)
     print(df[['transcript', 'max', 'avg', 'std']])
 
+    # --------------------------------------------------------------------------
+    # To sort the transcript per abundance
+    df.sort_values('avg', inplace=True)
+    # df = df.loc[df.avg > 0.5]
+    transcripts = list(df.transcript)
+    # --------------------------------------------------------------------------
+
     rectangles = []
     max_val = max(df['avg'])
     for i in df.index:
@@ -208,6 +256,8 @@ def graph_transcripts(ax, transcripts, BOX_HEIGHT, STEPS):
     ax.get_yaxis().set_visible(False)
     ax.set_title('TPM')
 
+    return transcripts
+
 
 def prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS, strand):
 
@@ -229,19 +279,25 @@ def prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS, strand):
         ax = fig.add_subplot(gs[0, 1:])
         ax2 = fig.add_subplot(gs[0, :1])
     else:
-        fig, ax = plt.subplots(figsize=(16, 8))
+        fig, ax = plt.subplots(figsize=(20, 10))
 
     offset = 0.05 * end
     ax.set_xlim(start - offset, end + 5*offset)
 
     tmp = ref_df.loc[ref_df.feature == 'transcript']
-    tmp.sort_values(by=['transcript_support_level', 'transcript_id'],
+    # To get only protein_coding and NMD transcripts
+    tmp = tmp.loc[ref_df.transcript_id.isin(['ENST00000429589',
+                                             'ENST00000467585',
+                                             'ENST00000425053',
+                                             'ENST00000494445'])]
+    tmp.sort_values(by=['transcript_id'],
                     ascending=False,
                     inplace=True)
-    # print(tmp)
     transcripts = tmp.transcript_id
-    # for t in transcripts:
-    #     print(t)
+
+    if TPM_VALS:
+        # graph the transcript part
+        transcripts = graph_transcripts(ax2, transcripts, BOX_HEIGHT, STEPS)
 
     yloc = 1
     exons = []
@@ -263,7 +319,8 @@ def prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS, strand):
 
         ax.hlines(yloc, t_start, t_end, color='#a6bddb')
         ax.text(0, yloc + 0.4 * STEPS,
-                '{} ({}) tsl{} {}'.format(t_id, biot, int(tsl), t_name),
+                '{} ({})'.format(t_name, biot),
+                # '{} ({}) tsl{} {}'.format(t_id, biot, int(tsl), t_name),
                 fontsize=FONTSIZE)
 
         for e in exon_list:
@@ -297,20 +354,16 @@ def prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS, strand):
     ax.get_yaxis().set_visible(False)
     ax.set_title(f'{gene_name} (strand {strand})')
 
-    if TPM_VALS:
-        # graph the transcript part
-        graph_transcripts(ax2, transcripts, BOX_HEIGHT, STEPS)
-
     plt.tight_layout()
-    # plt.savefig('/data/labmeetings/DKC1/transcripts_DKC1__.svg',
-    #             format='svg', transparent=True)
-    plt.show()
+    plt.savefig('/data/labmeetings/host_interactions/EIF4A2_NMD_transcript.svg',
+                format='svg', transparent=True)
+    # plt.show()
 
 
 def main():
 
-    GOI = 'RPS8'
-    TPM_VALS = True
+    GOI = 'EIF4A2'
+    TPM_VALS = False
     ref_df, sno_in_host, strand = load_ref(GOI)
 
     sno_data = get_data(GOI)

@@ -6,10 +6,13 @@ from scipy.stats import mannwhitneyu as mwu
 
 import matplotlib.pyplot as plt
 import seaborn as sns
+plt.rcParams['svg.fonttype'] = 'none'
 
 parsed_file = snakemake.input.parsed
 sno_host_loc_file = snakemake.input.sno_host_loc
 sno_host_file = snakemake.input.sno_host
+
+out_file = snakemake.output.svg
 
 def load_df(file):
     df = pd.read_csv(file, sep='\t')
@@ -32,7 +35,7 @@ def analyse(gtf_df, sno_host_loc_df, sno_host_df):
     sno_host_list = sno_host_df.single_id2
     network_host_df = host_df.loc[host_df.gene_id.isin(sno_host_list)]
 
-    # host_df = host_df.loc[~(host_df.gene_id.isin(network_host_df.gene_id))] # CHANGED
+    host_df = host_df.loc[~(host_df.gene_id.isin(network_host_df.gene_id))] # CHANGED
 
     host_len_trans = len(host_df)
     host_len_genes = len(set(host_df.gene_id))
@@ -95,7 +98,7 @@ def graph(data, nb_genes):
     fig, ax = plt.subplots()
     fig.canvas.draw()
 
-    for label, data, color in zip(groups[:2], data[:2], colors[:2]):
+    for label, data, color in zip(groups, data, colors):
         sns.kdeplot(data=data, shade=True, linewidth=1, alpha=.3,
                     label=label, ax=ax, bw_adjust=1,
                     color=color)#, cut=0)
@@ -112,6 +115,7 @@ def graph(data, nb_genes):
     plt.title('Transcripts/gene for snoRNA host genes')
     plt.xlabel('Number of transcripts per gene')
     plt.legend()
+    # plt.savefig(out_file, format='svg')
     plt.show()
 
 

@@ -112,17 +112,17 @@ def barh_snoRNA_host(df_):
 
     r = [x for x in range(NUM_TOP_SNO)]
 
-    offset = np.zeros(NUM_TOP_SNO)
-    offset_dict = {}
-    for biotype, color in BIO_COLORS.items():
-        plt.barh(r, list(viz_df[biotype]), left=offset, color=color,
-                 height=0.9, label=biotype)
-        offset_dict[biotype] = offset.copy()
-        offset += np.array(list(viz_df[biotype]))
+    # offset = np.zeros(NUM_TOP_SNO)
+    # offset_dict = {}
+    # for biotype, color in BIO_COLORS.items():
+    #     plt.barh(r, list(viz_df[biotype]), left=offset, color=color,
+    #              height=0.9, label=biotype)
+    #     offset_dict[biotype] = offset.copy()
+    #     offset += np.array(list(viz_df[biotype]))
 
     # create host values
-    # plt.barh(r, viz_df.host_int, color='#33393B',
-    #          height=0.9, label='host')
+    plt.barh(r, viz_df.host_int, color='#33393B',
+             height=0.9, label='host')
 
 
     # Custom x axis
@@ -143,7 +143,7 @@ def barh_snoRNA_host(df_):
     plt.margins(y=0)
     plt.tight_layout()
     # Show graphic
-    # plt.savefig('/data/seminar/first_august_21_2020/barh_50_snoRNA_host.svg',
+    # plt.savefig('/data/labmeetings/host_interactions/barh_50_snoRNA_host_interactions.svg',
     #             format='svg', transparent=True)
     plt.show()
 

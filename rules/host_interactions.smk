@@ -3,7 +3,9 @@ rule create_sno_host_pair:
         gene_bed = join(config['path']['ref'],
                                 config['file']['gene_bed_biotype']),
         merged_double = join(config['path']['processed'],
-                             config['file']['merged_double'])
+                             config['file']['merged_double']),
+        snodb = join(config['path']['ref'],
+                     config['file']['snoDB']),
     output:
         prot_coding_sno_host = join(config['path']['ref'],
                                     config['file']['prot_coding_sno_host']),
@@ -78,7 +80,7 @@ rule create_simplified_bedgraph_cons:
                             config['file']['prot_cod_sno_host_loc']),
     output:
         simple_bedgraph = join(config['path']['sno_host_data'],
-                        config['file']['simplified_host_bedgraph']),
+                               config['file']['simplified_host_bedgraph']),
     shell:
         "awk 'BEGIN{{FS=\"\t\";OFS=\"\t\"}}"
         "{{if(NR > 1)print \"chr\"$1,$9-100,$10+100,$7}}' {input.sno_host_loc} "
@@ -119,7 +121,7 @@ rule other_conservation:
         cons = join(config['path']['sno_host_data'],
                     config['file']['cons'])
     output:
-        'other_cons.tok'
+        svg = '/data/labmeetings/host_interactions/other_conservation.svg'
     conda:
         "../envs/python.yaml"
     script:
@@ -136,7 +138,7 @@ rule transcript_per_gene:
         sno_host = join(config['path']['sno_host_data'],
                         config['file']['sno_host_data']),
     output:
-        'transcript_per_gene.tok'
+        svg = '/data/labmeetings/host_interactions/transcript_per_gene.svg'
     conda:
         "../envs/python.yaml"
     script:
@@ -153,6 +155,8 @@ rule alternative_splicing_intron:
     output:
         alt_splice = join(config['path']['sno_host_data'],
                           config['file']['alt_splice']),
+        graph1 = '/data/labmeetings/host_interactions/alt_splicing_bar.svg',
+        graph2 = '/data/labmeetings/host_interactions/alt_splicing_cumsum.svg'
     conda:
         "../envs/python.yaml"
     script:

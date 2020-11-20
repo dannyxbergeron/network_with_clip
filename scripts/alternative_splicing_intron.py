@@ -4,7 +4,8 @@ import scipy.stats as stats
 
 import matplotlib.pyplot as plt
 import seaborn as sns
-sns.set_theme()
+plt.rcParams['svg.fonttype'] = 'none'
+# sns.set_theme()
 
 from pybedtools import BedTool as bt
 
@@ -13,6 +14,8 @@ sno_host_loc_file = snakemake.input.sno_host_loc
 sno_host_file = snakemake.input.cons
 
 out_file = snakemake.output.alt_splice
+graph1 = snakemake.output.graph1
+graph2 = snakemake.output.graph2
 
 
 def load_df(file):
@@ -227,6 +230,7 @@ def graph(df):
 
     # Show graphic
     plt.legend()
+    plt.savefig(graph1, format='svg')
     plt.show()
 
 
@@ -268,7 +272,8 @@ def graph_cumsum(df_, net_sno):
     plt.xlabel('Distance from the closest splicing event')
     plt.ylabel('Cumulative % of snoRNA')
     plt.legend()
-    plt.show()
+    plt.savefig(graph2, format='svg')
+    # plt.show()
 
 
 def main():
