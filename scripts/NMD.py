@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 
 plt.rcParams['svg.fonttype'] = 'none'
 plt.rcParams.update({'font.size': 15})
+plt.rcParams['font.sans-serif'] = ['Arial']
 
 tpm_file = snakemake.input.NMD_tpm
 transId_geneId_file = snakemake.input.transId_geneId

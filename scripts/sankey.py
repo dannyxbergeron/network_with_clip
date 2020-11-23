@@ -6,6 +6,7 @@ from matplotlib.sankey import Sankey
 import seaborn as sns
 
 plt.rcParams['svg.fonttype'] = 'none'
+plt.rcParams['font.sans-serif'] = ['Arial']
 # sns.set_theme()
 
 from pybedtools import BedTool as bt

@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 plt.rcParams['svg.fonttype'] = 'none'
+plt.rcParams.update({'font.size': 15})
+plt.rcParams['font.sans-serif'] = ['Arial']
 sns.set_theme()
 
 data_file = snakemake.input.cons
@@ -95,7 +97,7 @@ def analysis(net_couples, other_couples, pearson_dict):
     # For the pvalues
     fig, ax = plt.subplots()
     fig.canvas.draw()
-    
+
     sns.kdeplot(data=net_stats[:,1], shade=True, linewidth=1, alpha=.3,
                 label='network pvalues', ax=ax, bw_adjust=1,
                 color='cyan')

@@ -12,6 +12,10 @@ from scipy.stats import mannwhitneyu as mwu
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+plt.rcParams['svg.fonttype'] = 'none'
+plt.rcParams.update({'font.size': 15})
+plt.rcParams['font.sans-serif'] = ['Arial']
+
 from pybedtools import BedTool as bt
 
 data_file = snakemake.input.alt_splice

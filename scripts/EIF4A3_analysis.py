@@ -8,6 +8,7 @@ from pybedtools import BedTool as bt
 
 plt.rcParams['svg.fonttype'] = 'none'
 plt.rcParams.update({'font.size': 10})
+plt.rcParams['font.sans-serif'] = ['Arial']
 
 bg_file = snakemake.input.EIF4A3_CLIP
 ref_file = snakemake.input.gene_bed_biotype

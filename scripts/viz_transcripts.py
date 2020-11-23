@@ -11,6 +11,7 @@ from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
 
 plt.rcParams['svg.fonttype'] = 'none'
+plt.rcParams['font.sans-serif'] = ['Arial']
 
 data_file = snakemake.input.data_file
 

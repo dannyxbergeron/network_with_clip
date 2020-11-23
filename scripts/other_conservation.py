@@ -9,6 +9,8 @@ from scipy.stats import mannwhitneyu as mwu
 import matplotlib.pyplot as plt
 import seaborn as sns
 plt.rcParams['svg.fonttype'] = 'none'
+plt.rcParams.update({'font.size': 15})
+plt.rcParams['font.sans-serif'] = ['Arial']
 # sns.set_theme()
 
 from pybedtools import BedTool as bt
@@ -51,7 +53,7 @@ def get_stats(df_):
     df['side'] = side
     df['dist'] = dist
 
-    print(df)
+    # print(df)
 
     print('--------------------- STATS ---------------------')
 
@@ -151,9 +153,9 @@ def get_cons(data_df, df, bedgraph_df):
 
     df.fillna(0, inplace=True)
     df.sort_values(['mean_cons'], inplace=True)
-    print(df.describe())
+    # print(df.describe())
 
-    print(df)
+    # print(df)
 
     print(f'------> Average cons for the other: {df.mean_cons.mean()}')
 
@@ -168,6 +170,18 @@ def graph(df, ref_df_cons):
                               alternative='two-sided')
     print(f'For network host interacting vs others p_value: {net_pval}')
     print('===================================================\n')
+
+
+    def get_vals(list_):
+        pos, neg = 0, 0
+        for v in list_:
+            if v >= 0.5: pos += 1
+            else: neg +=1
+        return pos, neg
+
+    network_values = get_vals(df['other_mean_cons'])
+    other_values = get_vals(ref_df_cons['mean_cons'])
+    print(f'Network vals: {network_values}, other vals: {other_values}')
 
 
     groups = [
@@ -189,10 +203,7 @@ def graph(df, ref_df_cons):
     plt.xlabel('Average conservation of the regions')
     plt.legend()
     # plt.savefig(svg, format='svg')
-    # plt.show()
-
-    print(list(df['other_mean_cons']))
-    print(list(ref_df_cons['mean_cons']))
+    plt.show()
 
 
 def main():
@@ -204,7 +215,7 @@ def main():
     ref_df = load_df(sno_host_file)
     ref_df = ref_df.loc[~ref_df.gene_id.isin(df.single_id1)]
 
-    print(ref_df.columns)
+    # print(ref_df.columns)
     bedgraph_df = load_bedgraph()
 
     ref_df_cons = get_cons(df, ref_df, bedgraph_df)

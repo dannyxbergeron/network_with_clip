@@ -3,11 +3,17 @@ from collections import defaultdict
 import numpy as np
 import pandas as pd
 
+import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import seaborn as sns
 
 plt.rcParams['svg.fonttype'] = 'none'
+plt.rcParams.update({'font.size': 15})
+plt.rcParams['font.sans-serif'] = ['Arial']
 sns.set_theme()
+plt.rc('xtick', labelsize=20)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=20)    # fontsize of the tick labels
 
 data_file = snakemake.input.data_file
 
@@ -69,7 +75,9 @@ def graph_pie_chart(df_):
 
 def barh_snoRNA_host(df_):
 
-    NUM_TOP_SNO = 50
+    NUM_TOP_SNO = 30
+    FONTSIZE = 20
+    SNO_SIZE = 15
 
     df = df_.copy(deep=True)
     gene_id_name_dict = dict(zip(df.single_id1, df.name1))
@@ -78,15 +86,15 @@ def barh_snoRNA_host(df_):
     sno_list = list(sno_host_df.single_id1)
     all_sno_host = df.loc[df.single_id1.isin(sno_list)]
 
-    top_50 = all_sno_host[['single_id1', 'support']].groupby('single_id1').sum().reset_index()
-    top_50.sort_values('support', inplace=True, ascending=False)
-    sno_50_list = top_50.single_id1.values[:NUM_TOP_SNO]
+    top = all_sno_host[['single_id1', 'support']].groupby('single_id1').sum().reset_index()
+    top.sort_values('support', inplace=True, ascending=False)
+    sno_top_list = top.single_id1.values[:NUM_TOP_SNO]
 
     viz_df = pd.DataFrame(BIO_COLORS.keys(), columns=['biotype'])
     viz_df.set_index('biotype', drop=True, inplace=True)
     print(viz_df)
     sno_host_dict = {}
-    for sno in sno_50_list:
+    for sno in sno_top_list:
         tmp = all_sno_host.loc[all_sno_host.single_id1 == sno]
 
         bio_tmp = tmp[['simple_biotype2', 'support']]
@@ -112,38 +120,48 @@ def barh_snoRNA_host(df_):
 
     r = [x for x in range(NUM_TOP_SNO)]
 
-    # offset = np.zeros(NUM_TOP_SNO)
-    # offset_dict = {}
-    # for biotype, color in BIO_COLORS.items():
-    #     plt.barh(r, list(viz_df[biotype]), left=offset, color=color,
-    #              height=0.9, label=biotype)
-    #     offset_dict[biotype] = offset.copy()
-    #     offset += np.array(list(viz_df[biotype]))
+    fig = plt.figure(constrained_layout=True, figsize=(20, 10))
+    gs = fig.add_gridspec(1, 2)
+    ax = fig.add_subplot(gs[0, :1])
+    ax2 = fig.add_subplot(gs[0, 1:])
+    offset = np.zeros(NUM_TOP_SNO)
+    offset_dict = {}
+    for biotype, color in BIO_COLORS.items():
+        ax.barh(r, list(viz_df[biotype]), left=offset, color=color,
+                 height=0.9, label=biotype)
+        offset_dict[biotype] = offset.copy()
+        offset += np.array(list(viz_df[biotype]))
 
     # create host values
-    plt.barh(r, viz_df.host_int, color='#33393B',
+    ax2.barh(r, viz_df.host_int, color='#33393B',
              height=0.9, label='host')
 
 
-    # Custom x axis
-    sno_50_names = [gene_id_name_dict[x] for x in sno_50_list]
-    plt.yticks(r, sno_50_names, size=7)
-    plt.xlabel(r"% of the interactions", size=12)
-    plt.ylabel("snoRNA", size=12)
+    # Custom axis
+    sno_top_names = [gene_id_name_dict[x] for x in sno_top_list]
+    plt.ylabel('snoRNA', size=FONTSIZE)
+    plt.yticks(r, sno_top_names, size=SNO_SIZE)
+    plt.xlabel(r"% of the interactions", size=FONTSIZE)
+    plt.margins(y=0)
+    ax.set_yticks(r, sno_top_names)
+    ax.set_yticklabels([])
+    ax.set_xlabel(r"% of the interactions", fontdict={'size': FONTSIZE})
+    ax.margins(y=0)
 
     # add the labels
     for i, v in enumerate(list(viz_df.support)):
-        plt.text(101, i, str(v), color='blue', va='center', size=7)
+        plt.text(101, i, str(v), color='blue', va='center', size=SNO_SIZE)
 
-    plt.text(94, 50.5, 'Interaction counts', color='black', va='center')
+    plt.text(94, NUM_TOP_SNO + 0.5, 'Interaction counts',
+             color='black', va='center', fontdict={'size': FONTSIZE})
 
     # Add a legend
     plt.legend(loc='upper left', bbox_to_anchor=(1.05, 1), ncol=1)
-    plt.title('Top 50 snoRNA')
+    plt.title(f'Top {NUM_TOP_SNO} snoRNA', size=FONTSIZE+2)
     plt.margins(y=0)
     plt.tight_layout()
     # Show graphic
-    # plt.savefig('/data/labmeetings/host_interactions/barh_50_snoRNA_host_interactions.svg',
+    # plt.savefig(f'/data/labmeetings/host_interactions/barh_top_{NUM_TOP_SNO}.svg',
     #             format='svg', transparent=True)
     plt.show()
 
