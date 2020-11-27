@@ -14,8 +14,8 @@ sno_host_loc_file = snakemake.input.sno_host_loc
 sno_host_file = snakemake.input.cons
 
 out_file = snakemake.output.alt_splice
-graph1 = snakemake.output.graph1
-graph2 = snakemake.output.graph2
+# graph1 = snakemake.output.graph1
+# graph2 = snakemake.output.graph2
 
 
 def load_df(file):
@@ -230,7 +230,51 @@ def graph(df):
 
     # Show graphic
     plt.legend()
-    plt.savefig(graph1, format='svg')
+    # plt.savefig(graph1, format='svg')
+    plt.show()
+
+
+def stats_km(net_, other_):
+
+    print(len(net_), len(other_))
+    net = sorted(list([x for x in net_ if not pd.isnull(x)]))
+    other = sorted(list([x for x in other_ if not pd.isnull(x)]))
+    print(len(net), len(other))
+
+    o, p = stats.mannwhitneyu(net, other)
+    print('mannwhitneyu: ', o, p)
+
+    maximum = max(max(net), max(other))
+    net_idx = 0
+    other_idx = 0
+    dists = []
+    x = []
+    for i in range(2000):
+        if net_idx < len(net) -1:
+            while net[net_idx] == i:
+                net_idx += 1
+        if other_idx < len(other) - 1:
+            while other[other_idx] == i:
+                other_idx += 1
+
+        if not dists or (net_idx, other_idx) != dists[-1]:
+            dists.append((net_idx, other_idx))
+            x.append(i)
+
+    dists = np.array(dists)
+    net_dist = dists[:, 0] / len(net_) * 100
+    other_dist = dists[:, 1] / len(other_) * 100
+
+    print(net_dist)
+    print(other_dist)
+
+    # ==================== STATS ==========================
+    stat, pvalue = stats.kstest(net_dist, other_dist, alternative='two-sided')
+    print(f'kolmogorov-smirnov test, stat: {stat}, pvalue: {pvalue}')
+    # ==================== STATS ==========================
+
+    plt.plot(x, net_dist, color='blue', label='network', linewidth=3)
+    plt.plot(x, other_dist, color='red', label='other', linewidth=3)
     plt.show()
 
 
@@ -241,7 +285,10 @@ def graph_cumsum(df_, net_sno):
     net_df = df_copy.loc[df_copy.gene_id.isin(net_sno)]
     other_df = df_copy.loc[~df_copy.gene_id.isin(net_sno)]
 
-    print(len(net_df), len(other_df))
+    # For stats----------------------
+    stats_km(net_df.distance.values, other_df.distance.values)
+
+    # print(len(net_df), len(other_df))
 
     fig, axes = plt.subplots(figsize=(12, 8))
     dfs = [net_df, other_df]
@@ -267,13 +314,14 @@ def graph_cumsum(df_, net_sno):
 
         plt.plot(x, y, color=color, label=label, linewidth=3)
 
+
     # plt.grid(b=True, which='major', color='lightgray', linestyle='-')
     plt.title('snoRNA splicing modulation potential')
     plt.xlabel('Distance from the closest splicing event')
     plt.ylabel('Cumulative % of snoRNA')
     plt.legend()
-    plt.savefig(graph2, format='svg')
-    # plt.show()
+    # plt.savefig(graph2, format='svg')
+    plt.show()
 
 
 def main():
@@ -290,7 +338,9 @@ def main():
 
     # Get stats to make a graph
     stats_df = get_stats(sno_df, sno_host_df)
-    graph(stats_df)
+    # graph(stats_df)
+
+    print('===============================================================')
 
     graph_cumsum(sno_df, list(sno_host_df.single_id1))
 
@@ -300,8 +350,8 @@ def main():
     sno_df['in_net'] = np.where(sno_df.gene_id.isin(sno_host_df.single_id1),
                                 True,
                                 False)
-    print(sno_df[['seqname', 'start', 'end', 'gene_name',
-                  'host_name', 'splicing_hypothesis', 'distance', 'in_net']])
+    # print(sno_df[['seqname', 'start', 'end', 'gene_name',
+    #               'host_name', 'splicing_hypothesis', 'distance', 'in_net']])
 
     splicing_dict = dict(zip(sno_df.gene_id, sno_df.splicing_hypothesis))
     distance_dict = dict(zip(sno_df.gene_id, sno_df.distance))

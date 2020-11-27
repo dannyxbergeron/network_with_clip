@@ -128,6 +128,24 @@ rule other_conservation:
         "../scripts/other_conservation.py"
 
 
+rule other_conservation_bootstrap:
+    input:
+        sno_host_loc = join(config['path']['ref'],
+                            config['file']['prot_cod_sno_host_loc']),
+        bedgraph = join(config['path']['sno_host_data'],
+                        config['file']['simplified_host_bedgraph']),
+        cons = join(config['path']['sno_host_data'],
+                    config['file']['cons'])
+    output:
+        'tok'
+    threads:
+        8
+    conda:
+        "../envs/python.yaml"
+    script:
+        "../scripts/other_conservation_bootstrap.py"
+
+
 
 rule transcript_per_gene:
     input:
@@ -155,8 +173,8 @@ rule alternative_splicing_intron:
     output:
         alt_splice = join(config['path']['sno_host_data'],
                           config['file']['alt_splice']),
-        graph1 = '/data/labmeetings/host_interactions/alt_splicing_bar.svg',
-        graph2 = '/data/labmeetings/host_interactions/alt_splicing_cumsum.svg'
+        # graph1 = '/data/labmeetings/host_interactions/alt_splicing_bar.svg',
+        # graph2 = '/data/labmeetings/host_interactions/alt_splicing_cumsum.svg'
     conda:
         "../envs/python.yaml"
     script:

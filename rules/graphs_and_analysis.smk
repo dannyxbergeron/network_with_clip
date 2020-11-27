@@ -109,6 +109,14 @@ rule graph_merged:
     script:
         "../scripts/graph_merged.py"
 
+rule conservation_simulation_graph:
+    output:
+        'conservation_simulation_graph.tok'
+    conda:
+        "../envs/python.yaml"
+    script:
+        "../scripts/conservation_simulation_graph.py"
+
 
 rule sankey:
     input:
