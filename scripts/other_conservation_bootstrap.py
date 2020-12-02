@@ -183,7 +183,7 @@ def main():
 
     # ========================= MULTIPROCESSING ==========================
     N = 16
-    CORES = 8
+    CORES = 4
     pool = mp.Pool(processes = CORES)
 
     # Map apply_func function with data and my_function to cores
