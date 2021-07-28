@@ -7,6 +7,7 @@ from scipy.stats import mannwhitneyu as mwu
 import matplotlib.pyplot as plt
 import seaborn as sns
 plt.rcParams['svg.fonttype'] = 'none'
+plt.rcParams['font.sans-serif'] = ['Arial']
 
 parsed_file = snakemake.input.parsed
 sno_host_loc_file = snakemake.input.sno_host_loc

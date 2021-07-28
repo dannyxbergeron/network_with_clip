@@ -70,7 +70,8 @@
         "NMD_tpm_transcript": "Colombo_new_annot_transcript_tpm.tsv",
         "transId_geneId_geneName": "transId_geneId_geneName.txt",
         "sign_trans_nmd": "NMD_KD_rescue_transcripts.tsv",
-        "EIF4A3_CLIP": "modif_hg38_GSM1001331_CLIP2.bg"
+        "EIF4A3_CLIP": "modif_hg38_GSM1001331_CLIP2.bg",
+        "tableS1": "TableS1.csv"
     },
     "network_file":
     {

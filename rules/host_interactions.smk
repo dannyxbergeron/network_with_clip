@@ -173,8 +173,8 @@ rule alternative_splicing_intron:
     output:
         alt_splice = join(config['path']['sno_host_data'],
                           config['file']['alt_splice']),
-        # graph1 = '/data/labmeetings/host_interactions/alt_splicing_bar.svg',
-        # graph2 = '/data/labmeetings/host_interactions/alt_splicing_cumsum.svg'
+        graph1 = '/data/labmeetings/host_interactions/alt_splicing_bar.svg',
+        graph2 = '/data/labmeetings/host_interactions/alt_splicing_cumsum.svg'
     conda:
         "../envs/python.yaml"
     script:
@@ -228,3 +228,15 @@ rule reads_in_extensions:
         "../envs/python.yaml"
     script:
         "../scripts/reads_in_extensions.py"
+
+# ---------------- TEST FOR NOW --------------------------------
+rule host_int_multiple_sno_in_host:
+    input:
+        merged_file = join(config['path']['processed'],
+                           config['file']['merged_double_inta'])
+    output:
+        'tok'
+    conda:
+        "../envs/python_seaborn.yaml"
+    script:
+        "../scripts/host_int_multiple_sno_in_host.py"

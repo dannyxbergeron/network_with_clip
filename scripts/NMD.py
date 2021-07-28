@@ -56,7 +56,9 @@ def load_process_colombo(file, corresp_dict, GOI, significant_t):
     df = pd.read_csv(file, sep='\t')
     df = df.loc[df.transcript.isin(significant_t)]
 
-    df = df.loc[df.transcript.isin(['ENST00000429589', 'ENST00000467585'])]
+    # For only the transcript not having exon 4
+    # df = df.loc[df.transcript.isin(['ENST00000429589', 'ENST00000467585'])]
+    print(df)
 
     df.set_index('transcript', inplace=True)
     df = df.transpose()

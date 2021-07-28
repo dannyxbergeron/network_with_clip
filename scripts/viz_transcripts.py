@@ -144,7 +144,6 @@ def add_sno_data(sno_data, ax, gene_start, gene_end, yloc, BOX_HEIGHT, off):
         ax.add_collection(pc)
         legloc -= 0.25 * BOX_HEIGHT + corr
 
-
     # CUSTOM STUFF FOR EIF4A2 ========================================
     # starts = [186784929, 186784832, 186784916, 186784817, 186784826, 186784881, 186784796+46, 186784796+46]
     # ends = [186784950, 186784842, 186784937, 186784843, 186784843, 186784919, 186784796+82, 186784796+64]
@@ -287,10 +286,18 @@ def prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS, strand):
 
     tmp = ref_df.loc[ref_df.feature == 'transcript']
     # To get only protein_coding and NMD transcripts
-    tmp = tmp.loc[ref_df.transcript_id.isin(['ENST00000429589',
-                                             'ENST00000467585',
-                                             'ENST00000425053',
-                                             'ENST00000494445'])]
+    # tmp = tmp.loc[ref_df.transcript_id.isin(['ENST00000429589',
+    #                                          'ENST00000467585',
+    #                                          'ENST00000425053',
+    #                                          'ENST00000494445'])]
+    # wanted_trans_id = ['ENST00000323963', 'ENST00000425053', 'ENST00000426808',
+    #  'ENST00000429589', 'ENST00000440191', 'ENST00000441007', 'ENST00000443963',
+    #   'ENST00000445596', 'ENST00000465222', 'ENST00000465792', 'ENST00000467585',
+    #   'ENST00000468362', 'ENST00000475653', 'ENST00000485101', 'ENST00000491473',
+    #   'ENST00000492144', 'ENST00000494445', 'ENST00000495049', 'ENST00000496382',
+    #   'ENST00000497177', ]
+    # tmp = tmp.loc[ref_df.transcript_id.isin(wanted_trans_id)]
+
     tmp.sort_values(by=['transcript_id'],
                     ascending=False,
                     inplace=True)
@@ -320,6 +327,7 @@ def prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS, strand):
 
         ax.hlines(yloc, t_start, t_end, color='#a6bddb')
         ax.text(0, yloc + 0.4 * STEPS,
+                # '{}'.format(t_name),
                 '{} ({})'.format(t_name, biot),
                 # '{} ({}) tsl{} {}'.format(t_id, biot, int(tsl), t_name),
                 fontsize=FONTSIZE)
@@ -356,14 +364,14 @@ def prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS, strand):
     ax.set_title(f'{gene_name} (strand {strand})')
 
     plt.tight_layout()
-    plt.savefig('/data/labmeetings/host_interactions/EIF4A2_NMD_transcript.svg',
-                format='svg', transparent=True)
+    plt.savefig('/data/predoc/presentation/PCAT4_SNORA75.svg',
+                format='svg')
     # plt.show()
 
 
 def main():
 
-    GOI = 'EIF4A2'
+    GOI = 'PCAT4'
     TPM_VALS = False
     ref_df, sno_in_host, strand = load_ref(GOI)
 

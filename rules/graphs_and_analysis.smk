@@ -194,3 +194,28 @@ rule EIF4A3_analysis:
         "../envs/python.yaml"
     script:
         "../scripts/EIF4A3_analysis.py"
+
+
+rule tableS1:
+    input:
+        ext_ratio = join(config['path']['sno_host_data'],
+                         config['file']['ext_ratio']),
+    output:
+        tableS1 = join(config['path']['tmp'],
+                       config['file']['tableS1']),
+    conda:
+        "../envs/python.yaml"
+    script:
+        "../scripts/table_S1.py"
+
+
+rule upset_plot:
+    input:
+        tableS1 = join(config['path']['tmp'],
+                       config['file']['tableS1']),
+    output:
+        svg = '/data/labmeetings/host_interactions/upset_plot.svg'
+    conda:
+        "../envs/upset_plot.yaml"
+    script:
+        "../scripts/upset_plot.py"

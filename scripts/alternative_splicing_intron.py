@@ -5,6 +5,7 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 import seaborn as sns
 plt.rcParams['svg.fonttype'] = 'none'
+plt.rcParams['font.sans-serif'] = ['Arial']
 # sns.set_theme()
 
 from pybedtools import BedTool as bt
@@ -14,8 +15,8 @@ sno_host_loc_file = snakemake.input.sno_host_loc
 sno_host_file = snakemake.input.cons
 
 out_file = snakemake.output.alt_splice
-# graph1 = snakemake.output.graph1
-# graph2 = snakemake.output.graph2
+graph1 = snakemake.output.graph1
+graph2 = snakemake.output.graph2
 
 
 def load_df(file):
@@ -89,11 +90,32 @@ def get_modulation(int_start, int_end, full_intron_exon_df, bt1_):
 
     intersect_df = intersect_df.loc[intersect_df.exon_id.str.contains('intron')]
     min_distance = 1000000
-    for start, end in intersect_df[['start2', 'end2']].values:
+    for start, end, gene_name in intersect_df[['start2', 'end2', 'gene_name']].values:
         if (start == int_start and end != int_end):
-            min_distance = min(min_distance, abs(end - sno_end), abs(int_end - sno_end))
+            canonical_dist = int_end - sno_end
+            alt_dist = end - sno_end
+            if alt_dist < 0:
+                alt_dist = 0 if end - sno_start > 0 else sno_start - end
+            min_distance = min(min_distance, canonical_dist, alt_dist)
+
+            if gene_name == 'SNORD133':
+                print('---------------------------------')
+                print('start == int_start', min_distance)
+                print(start, end)
+                print('=================================')
+
         elif (end == int_end and start != int_start):
-            min_distance = min(min_distance, abs(start - sno_start),  abs(int_start - sno_start))
+            canonical_dist = sno_start - int_start
+            alt_dist = sno_start - start
+            if alt_dist < 0:
+                alt_dist = 0 if sno_end - start > 0 else start - sno_end
+            min_distance = min(min_distance, canonical_dist, alt_dist)
+
+            if gene_name == 'SNORD133':
+                print('---------------------------------')
+                print('end == int_end', min_distance)
+                print(start, end)
+                print('=================================')
     if min_distance != 1000000:
         return True, min_distance
     return False, np.nan
@@ -230,8 +252,8 @@ def graph(df):
 
     # Show graphic
     plt.legend()
-    # plt.savefig(graph1, format='svg')
-    plt.show()
+    plt.savefig(graph1, format='svg')
+    # plt.show()
 
 
 def stats_km(net_, other_):
@@ -239,7 +261,7 @@ def stats_km(net_, other_):
     print(len(net_), len(other_))
     net = sorted(list([x for x in net_ if not pd.isnull(x)]))
     other = sorted(list([x for x in other_ if not pd.isnull(x)]))
-    print(len(net), len(other))
+    # print(len(net), len(other))
 
     o, p = stats.mannwhitneyu(net, other)
     print('mannwhitneyu: ', o, p)
@@ -265,8 +287,8 @@ def stats_km(net_, other_):
     net_dist = dists[:, 0] / len(net_) * 100
     other_dist = dists[:, 1] / len(other_) * 100
 
-    print(net_dist)
-    print(other_dist)
+    # print(net_dist)
+    # print(other_dist)
 
     # ==================== STATS ==========================
     stat, pvalue = stats.kstest(net_dist, other_dist, alternative='two-sided')
@@ -320,8 +342,8 @@ def graph_cumsum(df_, net_sno):
     plt.xlabel('Distance from the closest splicing event')
     plt.ylabel('Cumulative % of snoRNA')
     plt.legend()
-    # plt.savefig(graph2, format='svg')
-    plt.show()
+    plt.savefig(graph2, format='svg')
+    # plt.show()
 
 
 def main():
@@ -338,7 +360,7 @@ def main():
 
     # Get stats to make a graph
     stats_df = get_stats(sno_df, sno_host_df)
-    # graph(stats_df)
+    graph(stats_df)
 
     print('===============================================================')
 

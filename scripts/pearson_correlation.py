@@ -17,21 +17,21 @@ def tpm_matrix():
 
     print(matrix_df.columns)
     matrix_df = matrix_df[['gene_id', 'gene_name',
-        # 'HCT116_1', 'HCT116_2',
-        # 'INOF_1', 'MCF7_1', 'MCF7_2',
-        # 'PC3_1', 'PC3_2',
-        # 'SKOV_frg_1', 'SKOV_frg_2',
+        'HCT116_1', 'HCT116_2',
+        'INOF_1', 'MCF7_1', 'MCF7_2',
+        'PC3_1', 'PC3_2',
+        'SKOV_frg_1', 'SKOV_frg_2',
         # 'SKOV_nf_1', 'SKOV_nf_2',
-        # 'TOV112D_1', 'TOV112D_2',
-        # 'Liver_1', 'Liver_2', 'Liver_3',
-        'Breast_1', 'Breast_2', 'Breast_3', # 'Breast_4',
+        'TOV112D_1', 'TOV112D_2',
+        'Liver_1', 'Liver_2', 'Liver_3',
+        'Breast_1', 'Breast_2', 'Breast_3', 'Breast_4',
         'Testis_1', 'Testis_2', 'Testis_3',
         'Prostate_1', 'Prostate_2', 'Prostate_3',
         'Ovary_1', 'Ovary_2', 'Ovary_3',
         'SkeletalMuscle_1', 'SkeletalMuscle_2', 'SkeletalMuscle_3',
         'Brain_1', 'Brain_2', 'Brain_3',
-        # 'humanRef_1', 'humanRef_2', 'humanRef_3',
-        # 'brainLam_1', 'brainLam_2', 'brainLam_3'
+        'humanRef_1', 'humanRef_2', 'humanRef_3',
+        'brainLam_1', 'brainLam_2', 'brainLam_3'
     ]]
     return matrix_df
 
@@ -161,7 +161,7 @@ def graph_single(matrix_df, first_id, second_id_list):
         plt.gcf().set_size_inches(10, 6.5)
 
         plt.tight_layout()
-        # plt.savefig(f'/data/labmeetings/host_interactions/SNORD2_EIF4A2_corr.svg',
+        # plt.savefig(f'/data/labmeetings/host_interactions/SNORD2_EIF4A2_corr_with_cell_lines.svg',
         #             format='svg', transparent=True)
         plt.show()
         plt.close()
@@ -173,8 +173,8 @@ def main():
 
     matrix_df = tpm_matrix()
 
-    x_axis = 'ENSG00000168028'
-    y_axis = ['ENSG00000206760']
+    x_axis = 'ENSG00000156976'
+    y_axis = ['ENSG00000238942']
 
     graph_single(matrix_df, x_axis, y_axis)
 
