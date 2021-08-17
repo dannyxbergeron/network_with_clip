@@ -219,3 +219,62 @@ rule upset_plot:
         "../envs/upset_plot.yaml"
     script:
         "../scripts/upset_plot.py"
+
+
+# New figures asked by Michelle -------------------------------------------------------------
+rule dist_num_interactions:
+    input:
+        tableS1 = join(config['path']['tmp'],
+                       config['file']['tableS1']),
+    output:
+        svg = '/data/articles/SNORD2_article/svgs/dist_num_interactions.svg'
+    conda:
+        "../envs/python_seaborn.yaml"
+    script:
+        "../scripts/dist_num_interactions.py"
+
+rule distance_target_from_snoRNA:
+    input:
+        intra_sno_hosts = join(config['path']['sno_host_data'],
+                               config['file']['alt_splice']),
+    output:
+        svg = '/data/articles/SNORD2_article/svgs/distance_target_from_snoRNA.svg'
+    conda:
+        "../envs/python_seaborn.yaml"
+    script:
+        "../scripts/distance_target_from_snoRNA.py"
+
+
+rule upstream_vs_downstream:
+    input:
+        intra_sno_hosts = join(config['path']['sno_host_data'],
+                               config['file']['sno_host_data']),
+    output:
+        svg = '/data/articles/SNORD2_article/svgs/upstream_vs_downstream.svg'
+    conda:
+        "../envs/python_seaborn.yaml"
+    script:
+        "../scripts/upstream_vs_downstream.py"
+
+rule cannonical_targets:
+    """ For now it's same intron vs different locations vs other in network
+        **Only intronic snoRNA considered"""
+    input:
+        merged_double = join(config['path']['processed'],
+                             config['file']['merged_double']),
+        sno_host_loc = join(config['path']['ref'],
+                            config['file']['prot_cod_sno_host_loc']),
+        sno_host = join(config['path']['sno_host_data'],
+                        config['file']['sno_host_data']),
+        snodb = join(config['path']['ref'],
+                     config['file']['snoDB']),
+        bio_function = join(config['path']['ref'],
+                            config['file']['bio_function']),
+    output:
+        svg_can_targets = '/data/articles/SNORD2_article/svgs/cannonical_targets.svg',
+        svg_bio_functions = '/data/articles/SNORD2_article/svgs/bio_functions.svg',
+        svg_box_type = '/data/articles/SNORD2_article/svgs/box_type.svg',
+    conda:
+        "../envs/python_seaborn.yaml"
+    script:
+        "../scripts/cannonical_targets.py"

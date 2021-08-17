@@ -17,6 +17,10 @@ rule all:
                             bed=config['bedgraphs']),
         ext_ratio = join(config['path']['sno_host_data'],
                          config['file']['ext_ratio']),
+        dist_num_interactions = '/data/articles/SNORD2_article/svgs/dist_num_interactions.svg',
+        intra_sno_hosts = '/data/articles/SNORD2_article/svgs/distance_target_from_snoRNA.svg',
+        upstream_vs_downstream = '/data/articles/SNORD2_article/svgs/upstream_vs_downstream.svg',
+        cannonical_targets = '/data/articles/SNORD2_article/svgs/cannonical_targets.svg',
 
 
 rule merge_raw_and_filter:
@@ -206,3 +210,6 @@ include: "rules/graphs_and_analysis.smk"
 
 # Include the host_interaction part
 include: "rules/host_interactions.smk"
+
+# Include rules for the branch point prediction
+include: "rules/branch_point_prediction.smk"

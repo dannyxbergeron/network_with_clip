@@ -50,14 +50,14 @@ def get_stats(df_):
 
     side = []
     dist = []
-    for s1, e1, s2, e2, strand in df[['sno_start', 'sno_start', 'start2', 'end2', 'strand1']].values:
+    for s1, e1, s2, e2, strand in df[['sno_start', 'sno_end', 'start2', 'end2', 'strand1']].values:
         if strand == '-':
             max_val = max(e1, e2)
             s1, e1, s2, e2 = [(v - max_val) * -1 for v in [e1, s1, e2, s2]]
 
         if s2 < s1:
             side.append('upstream')
-            d = s1 - e2 if s1 - e1 > 0 else 0
+            d = s1 - e2 if s1 - e2 > 0 else 0
             dist.append(d)
         else:
             side.append('downstream')
@@ -258,7 +258,7 @@ def get_values(df_, beds):
 
 def graph(combined_df, ratio_dict):
 
-    MAX_VAL = 25
+    MAX_VAL = 20
 
     df = combined_df.copy(deep=True)
     df['ext_ratio'] = combined_df.DG.map(ratio_dict)
@@ -274,9 +274,9 @@ def graph(combined_df, ratio_dict):
     print('===================================================\n')
 
     in_net = np.where(in_net_df['ext_ratio'] <= MAX_VAL,
-                      in_net_df['ext_ratio'], 25)
+                      in_net_df['ext_ratio'], MAX_VAL)
     others = np.where(others_df['ext_ratio'] <= MAX_VAL,
-                      others_df['ext_ratio'], 25)
+                      others_df['ext_ratio'], MAX_VAL)
 
     groups = [
         'snoRNA in the network',
@@ -304,8 +304,7 @@ def graph(combined_df, ratio_dict):
         for tick_label in ax.get_xticks().tolist()
     ]
 
-    tick_labels[-3] = str(tick_labels[-3]) + '+'
-    tick_labels[-2] = ''
+    tick_labels[-2] = str(tick_labels[-2]) + '+'
     ax.set_xticklabels(tick_labels)
 
     left, right = plt.xlim()

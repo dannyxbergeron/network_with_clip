@@ -36,14 +36,14 @@ def get_stats(df_):
 
     side = []
     dist = []
-    for s1, e1, s2, e2, strand in df[['sno_start', 'sno_start', 'start2', 'end2', 'strand1']].values:
+    for s1, e1, s2, e2, strand in df[['sno_start', 'sno_end', 'start2', 'end2', 'strand1']].values:
         if strand == '-':
             max_val = max(e1, e2)
             s1, e1, s2, e2 = [(v - max_val) * -1 for v in [e1, s1, e2, s2]]
 
         if s2 < s1:
             side.append('upstream')
-            d = s1 - e2 if s1 - e1 > 0 else 0
+            d = s1 - e2 if s1 - e2 > 0 else 0
             dist.append(d)
         else:
             side.append('downstream')
@@ -52,6 +52,15 @@ def get_stats(df_):
 
     df['side'] = side
     df['dist'] = dist
+
+    df['min'] = df[['start2', 'end2', 'sno_start', 'sno_end']].min(axis=1)
+    df['start2'] = df['start2'] - df['min']
+    df['end2'] = df['end2'] - df['min']
+    df['sno_start'] = df['sno_start'] - df['min']
+    df['sno_end'] = df['sno_end'] - df['min']
+
+    print(df[['DG', 'start2', 'end2', 'sno_start', 'sno_end', 'strand1', 'side', 'dist']].sort_values('dist', ascending=False))
+
 
     # print(df)
 
@@ -210,17 +219,17 @@ def main():
 
     df = load_df(data_file)
     df = df.loc[df.interaction_type == 'intra']
-    df.drop_duplicates(subset=['merged_name'], inplace=True)
+    # df.drop_duplicates(subset=['merged_name'], inplace=True)
 
     ref_df = load_df(sno_host_file)
     ref_df = ref_df.loc[~ref_df.gene_id.isin(df.single_id1)]
 
-    # print(ref_df.columns)
+    print(ref_df.columns)
     bedgraph_df = load_bedgraph()
 
     ref_df_cons = get_cons(df, ref_df, bedgraph_df)
 
-    graph(df, ref_df_cons)
+    # graph(df, ref_df_cons)
 
 
 

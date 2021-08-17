@@ -237,6 +237,6 @@ rule host_int_multiple_sno_in_host:
     output:
         'tok'
     conda:
-        "../envs/python_seaborn.yaml"
+        "../envs/python_seabord.yaml"
     script:
         "../scripts/host_int_multiple_sno_in_host.py"

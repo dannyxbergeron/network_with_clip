@@ -31,7 +31,7 @@ def get_stats(df_):
 
     dist = []
     side = []
-    locs = ['sno_start', 'sno_start', 'start2', 'end2', 'strand1']
+    locs = ['sno_start', 'sno_end', 'start2', 'end2', 'strand1']
     for s1, e1, s2, e2, strand in df[locs].values:
         if strand == '-':
             max_val = max(e1, e2)
@@ -39,7 +39,7 @@ def get_stats(df_):
 
         if s2 < s1:
             side.append('upstream')
-            d = s1 - e2 if s1 - e1 > 0 else 0
+            d = s1 - e2 if s1 - e2 > 0 else 0
             dist.append(d)
         else:
             side.append('downstream')
@@ -169,7 +169,7 @@ def main():
     # load and process data
     df = load_df(data_file)
     df = df.loc[df.interaction_type == 'intra']
-    df.drop_duplicates(subset=['merged_name'], inplace=True)
+    # df.drop_duplicates(subset=['merged_name'], inplace=True)
 
     # load and process the reference
     ref_df = load_df(sno_host_file)
