@@ -21,6 +21,10 @@ rule all:
         intra_sno_hosts = '/data/articles/SNORD2_article/svgs/distance_target_from_snoRNA.svg',
         upstream_vs_downstream = '/data/articles/SNORD2_article/svgs/upstream_vs_downstream.svg',
         cannonical_targets = '/data/articles/SNORD2_article/svgs/cannonical_targets.svg',
+        bp_distance = join(config['path']['branchpoint'], config['file']['branchpoint']),
+        best_branch_points = join(config['path']['branchpoint'],
+                                  config['file']['best_branchpoint']),
+        svg_branch_point = '/data/articles/SNORD2_article/svgs/branchpoint_binding.svg',
 
 
 rule merge_raw_and_filter:

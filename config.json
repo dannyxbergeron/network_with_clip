@@ -26,7 +26,8 @@
         "sno_host_data": "data/sno_host",
         "tissues_cell_bg": "data/tissues_cell_bedgraph",
         "beds": "/home/danx/Documents/projects/cell_lines/results/new_annot_results/coco/bedgraph",
-        "NMD": "data/NMD"
+        "NMD": "data/NMD",
+        "branchpoint": "data/branchpoint"
     },
     "file":
     {
@@ -71,7 +72,12 @@
         "transId_geneId_geneName": "transId_geneId_geneName.txt",
         "sign_trans_nmd": "NMD_KD_rescue_transcripts.tsv",
         "EIF4A3_CLIP": "modif_hg38_GSM1001331_CLIP2.bg",
-        "tableS1": "TableS1.csv"
+        "tableS1": "TableS1.csv",
+        "intron_file": "snoRNA_intron_file.txt",
+        "mini_gtf": "mini_gtf.gtf",
+        "branchpoint": "branchpointer_output.txt",
+        "best_branchpoint": "best_branchpoint.txt",
+        "alt_splice_with_bp": "intra_with_alt_splicing_and_bp_info.tsv"
     },
     "network_file":
     {
