@@ -62,6 +62,10 @@ rule branchpointer:
         "../scripts/branchpoint_prediction.R"
 
 rule keep_best_branchpoints:
+    """
+    Extract and keep the best branchpoint position
+    for the branchpointer prediction
+    """
     input:
         bp_distance = join(config['path']['branchpoint'],
                            config['file']['branchpoint']),
@@ -78,6 +82,7 @@ rule keep_best_branchpoints:
         "../scripts/keep_best_branchpoints.py"
 
 rule branchpoint_binding:
+    """ Plot a piechart with proportion of snoRNA binding the branchpoint """
     input:
         intra_with_bp = join(config['path']['branchpoint'],
                              config['file']['alt_splice_with_bp']),
