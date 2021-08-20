@@ -25,6 +25,9 @@ rule all:
         best_branch_points = join(config['path']['branchpoint'],
                                   config['file']['best_branchpoint']),
         svg_branch_point = '/data/articles/SNORD2_article/svgs/branchpoint_binding.svg',
+        sno_intron_coordinates = join(config['path']['sno_intron'],
+                                      config['file']['sno_intron_coord']),
+        merged_mfe = join(config['path']['sno_intron'], config['file']['merged_mfe']),
 
 
 rule merge_raw_and_filter:
@@ -217,3 +220,6 @@ include: "rules/host_interactions.smk"
 
 # Include rules for the branch point prediction
 include: "rules/branch_point_prediction.smk"
+
+# Include rules for getting mfe for folding
+include: "rules/mfe_intron_folding.smk"

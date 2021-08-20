@@ -27,7 +27,8 @@
         "tissues_cell_bg": "data/tissues_cell_bedgraph",
         "beds": "/home/danx/Documents/projects/cell_lines/results/new_annot_results/coco/bedgraph",
         "NMD": "data/NMD",
-        "branchpoint": "data/branchpoint"
+        "branchpoint": "data/branchpoint",
+        "sno_intron": "data/sno_intron"
     },
     "file":
     {
@@ -77,7 +78,9 @@
         "mini_gtf": "mini_gtf.gtf",
         "branchpoint": "branchpointer_output.txt",
         "best_branchpoint": "best_branchpoint.txt",
-        "alt_splice_with_bp": "intra_with_alt_splicing_and_bp_info.tsv"
+        "alt_splice_with_bp": "intra_with_alt_splicing_and_bp_info.tsv",
+        "sno_intron_coord": "sno_intron_coordinates.tsv",
+        "merged_mfe": "merged_mfe.tsv"
     },
     "network_file":
     {
