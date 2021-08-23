@@ -278,3 +278,21 @@ rule cannonical_targets:
         "../envs/python_seaborn.yaml"
     script:
         "../scripts/cannonical_targets.py"
+
+
+rule SNORA12_targets:
+    input:
+        initial = join(config['path']['raw'], config['file']['initial']),
+        parsed_gtf = join(config['path']['ref'], config['file']['light_parsed_gtf']),
+        multiple_list = join(config['path']['ref'],
+                             config['file']['multiple_gene_name']),
+        gene_id = join(config['path']['ref'],
+                       config['file']['name_id']),
+        sno_host = join(config['path']['ref'],
+                        config['file']['sno_host']),
+    output:
+        svg = '/data/articles/SNORD2_article/svgs/SNORA12_interactions.svg',
+    conda:
+        "../envs/python_seaborn.yaml"
+    script:
+        "../scripts/SNORA12_targets.py"

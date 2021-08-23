@@ -42,11 +42,11 @@ def process_data(df_):
 
     df['side'] = sides
 
-    print(df[['start2', 'end2', 'sno_start', 'sno_end', 'strand2', 'side']])
+    # print(df[['start2', 'end2', 'sno_start', 'sno_end', 'strand2', 'side']])
     return df
 
 
-def graph(df_):
+def graph_bar_chart(df_):
 
     df = df_.copy(deep=True)
     df['target_loc'] = np.where(df.interaction_type == 'intra', 'Same intron', 'Not same intron')
@@ -95,6 +95,42 @@ def graph(df_):
     # plt.show()
 
 
+def graph_pie_chart(df):
+
+    print(df.columns)
+    df_groupby = df[['single_id1', 'side']].groupby('side').count().reset_index()
+    data = dict(zip(df_groupby.side, df_groupby.single_id1))
+
+    fig, ax= plt.subplots(figsize=(8,8))
+    ax.axis('equal')
+    labels = [x.capitalize() for x in data.keys()]
+    values = data.values()
+    colors = ['#1f78b4', '#b2df8a']
+
+    # Wedge properties
+    wp = { 'linewidth' : 2, 'edgecolor' : "white" }
+
+    def autopct(val):
+        num = (val / 100) * sum(values)
+        return f'{val:.1f}% ({num:.0f})'
+
+    wedges, texts, autotexts = ax.pie(values, labels=labels,
+           autopct=autopct, colors=colors,
+           shadow=False, startangle=120,
+           textprops={'color':'black', 'fontsize': 20},
+           wedgeprops=wp)
+    ax.set_title('Position of the interaction from the snoRNA\nfor snoRNA interating with their host', fontsize=18)
+
+    ax.legend(wedges, labels,
+          title ="SnoRNA target position",
+          loc="center left",
+          bbox_to_anchor=(1, 0, 0.5, 1),
+          fontsize=16)
+
+    # plt.show()
+    plt.savefig(out_file, format='svg')
+
+
 
 def main():
 
@@ -102,7 +138,9 @@ def main():
 
     df = process_data(df)
 
-    graph(df)
+    # graph_bar_chart(df)
+
+    graph_pie_chart(df)
 
 
 if __name__ == '__main__':

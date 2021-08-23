@@ -19,26 +19,32 @@ out_can = snakemake.output.svg_can_targets
 out_bio_func = snakemake.output.svg_bio_functions
 out_box_type = snakemake.output.svg_box_type
 
+TITLE_SIZE = 25
+AXIS_LABEL_SIZE = 20
+AXIS_TICK_SIZE = 16
+LEGEND_SIZE = 16
+
 def load_df(file):
     df = pd.read_csv(file, sep='\t')
     return df
 
 def get_ids(df, network_df, loc_df):
 
+    sno_interacting = set(df.single_id1)
     intra = set(df.loc[df.interaction_type == 'intra'].single_id1)
     diff_loc = set(df.loc[~(df.interaction_type == 'intra')].single_id1)
 
     others = set(network_df.single_id1)
-    others = others - intra - diff_loc
+    others = others - sno_interacting
     others = others.intersection(set(loc_df.gene_id))
 
     print('--> Length of intra, diff_loc and others')
     print(len(intra), len(diff_loc), len(others))
     print('-------------------------\n')
 
-    return intra, diff_loc, others
+    return sno_interacting, intra, diff_loc, others
 
-def analyse_can_targets(intra, diff_loc, others, snodb_df):
+def analyse_can_targets(all_sno_interating, others, snodb_df):
 
     def get_percent(ids, can_sno):
         ids_set = set(ids)
@@ -54,15 +60,13 @@ def analyse_can_targets(intra, diff_loc, others, snodb_df):
     snodb_df.dropna(thresh=2, inplace=True)
     cannonical_snoRNA = list(snodb_df.gene_id_annot2020)
 
-    intra_percent = get_percent(intra, cannonical_snoRNA)
-    diff_loc_percent = get_percent(diff_loc, cannonical_snoRNA)
+    all_sno_interating = get_percent(all_sno_interating, cannonical_snoRNA)
     others_percent = get_percent(others, cannonical_snoRNA)
 
-    print(f'Intra % of cannonical: {intra_percent:.1f}%')
-    print(f'Diff loc % of cannonical: {diff_loc_percent:.1f}%')
+    print(f'All snoRNA interacting % of cannonical: {all_sno_interating:.1f}%')
     print(f'Others % of cannonical: {others_percent:.1f}%')
 
-    return ['Same intron', 'Not same intron', 'Others'], [intra_percent, diff_loc_percent, others_percent]
+    return ['SnoRNA interacting\nwith their host', 'Others'], [all_sno_interating, others_percent]
 
 def graph_cannonical(names, data):
 
@@ -80,29 +84,33 @@ def graph_cannonical(names, data):
     ]
     ax.set_xticklabels(tick_labels)
 
-    plt.title('Number of cannonical snoRNA in the different groups', size=15)
-    plt.xlabel('Groups', size=12)
-    plt.ylabel('Percentage of snoRNAs', size=12)
+    for tick in ax.xaxis.get_major_ticks():
+                tick.label.set_fontsize(AXIS_TICK_SIZE)
+    for tick in ax.yaxis.get_major_ticks():
+                tick.label.set_fontsize(AXIS_TICK_SIZE)
+
+    plt.title('Number of cannonical snoRNA\nin the different groups', size=TITLE_SIZE)
+    plt.xlabel('Groups', size=AXIS_LABEL_SIZE)
+    plt.ylabel('Percentage of snoRNAs', size=AXIS_LABEL_SIZE)
 
     top_bar = mpatches.Patch(color='#fc8d62', label='Orphans')
     bottom_bar = mpatches.Patch(color='#66c2a5', label='Cannonical snoRNAs')
-    plt.legend(handles=[top_bar, bottom_bar])
+    plt.legend(handles=[top_bar, bottom_bar], fontsize=LEGEND_SIZE)
 
     # plt.show()
     plt.savefig(out_can, format='svg')
     plt.close()
 
-def prepare_data(intra, diff_loc, others, loc_df, bio_func_df):
+def prepare_data(all_sno_interating, others, loc_df, bio_func_df):
 
     def put_in_df(ids, name):
         tmp = pd.DataFrame(ids, columns=['gene_id'])
         tmp['group'] = name
         return tmp
 
-    intra_df = put_in_df(intra, 'intra')
-    diff_loc_df = put_in_df(diff_loc, 'diff_loc')
-    others_df = put_in_df(others, 'others')
-    master_df_original = pd.concat([intra_df, diff_loc_df, others_df])
+    all_interacting_df = put_in_df(all_sno_interating, 'SnoRNA interacting\nwith their host')
+    others_df = put_in_df(others, 'Others')
+    master_df_original = pd.concat([all_interacting_df, others_df])
 
     master_df = master_df_original.copy(deep=True)
     master_df['host_id'] = master_df.gene_id.map(dict(zip(loc_df.gene_id,
@@ -125,9 +133,7 @@ def prepare_data(intra, diff_loc, others, loc_df, bio_func_df):
 
 def graph_bio_functions(data_df):
 
-    groups = ['intra', 'diff_loc', 'others']
-    new_group_names = ['Same intron', 'Not same intron', 'Others']
-    # host_fct = sorted(list(set(data_df.host_function)), reverse=True)
+    groups = ['SnoRNA interacting\nwith their host', 'Others']
     host_fct = [
         'ribosomal protein',
         'Ribosome biogenesis & translation',
@@ -167,15 +173,21 @@ def graph_bio_functions(data_df):
         ax.bar(x, tmp_data, width, label=label, bottom=bottom, color=color)
         bottom += np.array(tmp_data)
 
+    for tick in ax.xaxis.get_major_ticks():
+                tick.label.set_fontsize(AXIS_TICK_SIZE)
+    for tick in ax.yaxis.get_major_ticks():
+                tick.label.set_fontsize(AXIS_TICK_SIZE)
+
+
     # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_ylabel('Percentage of host in fuction categories', size=12)
-    ax.set_xlabel('Groups', size=12)
-    ax.set_title('Proportions of function of snoRNA host gene according to their locations', size=15)
+    ax.set_title('Proportions of function of snoRNA host gene\naccording to their locations', size=TITLE_SIZE)
+    ax.set_ylabel('Percentage of host in fuction categories', size=AXIS_LABEL_SIZE)
+    ax.set_xlabel('Groups', size=AXIS_LABEL_SIZE)
     ax.set_xticks(x)
-    ax.set_xticklabels(new_group_names)
+    ax.set_xticklabels(groups)
 
     # ax.legend()
-    plt.legend(bbox_to_anchor=([1, 1, 0, 0]))
+    plt.legend(bbox_to_anchor=([1, 1, 0, 0]), fontsize=LEGEND_SIZE)
 
     fig.subplots_adjust(right=0.7)
     plt.savefig(out_bio_func, format='svg')
@@ -195,11 +207,11 @@ def process_box_type(merged_df_):
 
 def graph_box_type(data_df_):
 
-    order_dict = {'intra': 0, 'diff_loc': 1, 'others': 2}
+    order_dict = {'SnoRNA interacting\nwith their host': 0, 'Others': 1}
     data_df = data_df_.copy(deep=True)
     data_df['order'] = data_df.group.map(order_dict)
     data_df.sort_values(['order'], inplace=True)
-    labels = ['Same intron', 'Not same intron', 'Others']
+    labels = ['SnoRNA interacting\nwith their host', 'Others']
 
     print(data_df)
 
@@ -217,17 +229,22 @@ def graph_box_type(data_df_):
     ]
     ax.set_xticklabels(tick_labels)
 
-    plt.title('Proportion of snoRNA box type in different groups', size=15)
-    plt.xlabel('Groups', size=12)
-    plt.ylabel('Percentage of snoRNAs', size=12)
+    for tick in ax.xaxis.get_major_ticks():
+                tick.label.set_fontsize(AXIS_TICK_SIZE)
+    for tick in ax.yaxis.get_major_ticks():
+                tick.label.set_fontsize(AXIS_TICK_SIZE)
+
+    plt.title('Proportion of snoRNA box type\nin different groups', size=TITLE_SIZE)
+    plt.xlabel('Groups', size=AXIS_LABEL_SIZE)
+    plt.ylabel('Percentage of snoRNAs', size=AXIS_LABEL_SIZE)
 
     top_bar = mpatches.Patch(color='#7570b3', label='H/ACA')
     bottom_bar = mpatches.Patch(color='#d95f02', label='C/D')
-    plt.legend(handles=[top_bar, bottom_bar])
+    plt.legend(handles=[top_bar, bottom_bar], fontsize=LEGEND_SIZE)
 
     # plt.show()
     plt.savefig(out_box_type, format='svg')
-    # plt.close()
+    plt.close()
 
 def main():
 
@@ -242,16 +259,17 @@ def main():
     print('network_df', network_df.columns)
     print('==================================\n')
 
-    intra, diff_loc, others = get_ids(df, network_df, loc_df)
+    all_sno_interating, intra, diff_loc, others = get_ids(df, network_df, loc_df)
 
-    names, data = analyse_can_targets(intra, diff_loc, others, snodb_df)
+    # Analyse all snoRNA interacting with their host together
+    names, data = analyse_can_targets(all_sno_interating, others, snodb_df)
 
     graph_cannonical(names, data)
 
     # Bio function graph
     print('\n============================== Bio function analysis ==============================\n')
     bio_func_df = load_df(bio_function_file)
-    data_df, merged_df = prepare_data(intra, diff_loc, others, loc_df, bio_func_df)
+    data_df, merged_df = prepare_data(all_sno_interating, others, loc_df, bio_func_df)
 
     graph_bio_functions(data_df)
 

@@ -173,8 +173,8 @@ rule alternative_splicing_intron:
     output:
         alt_splice = join(config['path']['sno_host_data'],
                           config['file']['alt_splice']),
-        graph1 = '/data/labmeetings/host_interactions/alt_splicing_bar.svg',
-        graph2 = '/data/labmeetings/host_interactions/alt_splicing_cumsum.svg'
+        # graph1 = '/data/labmeetings/host_interactions/alt_splicing_bar.svg',
+        graph2 =  '/data/articles/SNORD2_article/svgs/alternative_splicing_intron.svg',
     conda:
         "../envs/python.yaml"
     script:

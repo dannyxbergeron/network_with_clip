@@ -15,7 +15,7 @@ sno_host_loc_file = snakemake.input.sno_host_loc
 sno_host_file = snakemake.input.cons
 
 out_file = snakemake.output.alt_splice
-graph1 = snakemake.output.graph1
+# graph1 = snakemake.output.graph1
 graph2 = snakemake.output.graph2
 
 
@@ -98,11 +98,11 @@ def get_modulation(int_start, int_end, full_intron_exon_df, bt1_):
                 alt_dist = 0 if end - sno_start > 0 else sno_start - end
             min_distance = min(min_distance, canonical_dist, alt_dist)
 
-            if gene_name == 'SNORD133':
-                print('---------------------------------')
-                print('start == int_start', min_distance)
-                print(start, end)
-                print('=================================')
+            # if gene_name == 'SNORD133':
+            #     print('---------------------------------')
+            #     print('start == int_start', min_distance)
+            #     print(start, end)
+            #     print('=================================')
 
         elif (end == int_end and start != int_start):
             canonical_dist = sno_start - int_start
@@ -111,11 +111,11 @@ def get_modulation(int_start, int_end, full_intron_exon_df, bt1_):
                 alt_dist = 0 if sno_end - start > 0 else start - sno_end
             min_distance = min(min_distance, canonical_dist, alt_dist)
 
-            if gene_name == 'SNORD133':
-                print('---------------------------------')
-                print('end == int_end', min_distance)
-                print(start, end)
-                print('=================================')
+            # if gene_name == 'SNORD133':
+            #     print('---------------------------------')
+            #     print('end == int_end', min_distance)
+            #     print(start, end)
+            #     print('=================================')
     if min_distance != 1000000:
         return True, min_distance
     return False, np.nan
@@ -252,8 +252,9 @@ def graph(df):
 
     # Show graphic
     plt.legend()
-    plt.savefig(graph1, format='svg')
+    # plt.savefig(graph1, format='svg')
     # plt.show()
+    plt.close()
 
 
 def stats_km(net_, other_):
@@ -300,24 +301,26 @@ def stats_km(net_, other_):
     plt.show()
 
 
-def graph_cumsum(df_, net_sno):
+def graph_cumsum(df_, intra_net_sno, not_intra_net_sno):
 
     df_copy = df_.copy(deep=True)
     df_copy.sort_values('distance', inplace=True)
-    net_df = df_copy.loc[df_copy.gene_id.isin(net_sno)]
-    other_df = df_copy.loc[~df_copy.gene_id.isin(net_sno)]
+    intra_net_sno = df_copy.loc[df_copy.gene_id.isin(intra_net_sno)]
+    not_intra_net_sno = df_copy.loc[df_copy.gene_id.isin(not_intra_net_sno)]
+    other_df = df_copy.loc[~df_copy.gene_id.isin(intra_net_sno + not_intra_net_sno)]
 
     # For stats----------------------
-    stats_km(net_df.distance.values, other_df.distance.values)
+    # stats_km(net_df.distance.values, other_df.distance.values)
 
     # print(len(net_df), len(other_df))
 
     fig, axes = plt.subplots(figsize=(12, 8))
-    dfs = [net_df, other_df]
-    colors = ['#377eb8', '#e41a1c']
-    labels = ['snoRNA-host interacting', 'snoRNA-host not interacting']
+    dfs = [intra_net_sno, not_intra_net_sno, other_df]
+    colors = ['#377eb8', 'purple', '#e41a1c']
+    labels = ['intra snoRNA-host interacting', 'not intra snoRNA-host interacting', 'snoRNA-host not interacting']
 
     for df, color, label in zip(dfs, colors, labels):
+        print(df)
         size = len(df)
         value = 100 / size
 
@@ -342,8 +345,8 @@ def graph_cumsum(df_, net_sno):
     plt.xlabel('Distance from the closest splicing event')
     plt.ylabel('Cumulative % of snoRNA')
     plt.legend()
-    plt.savefig(graph2, format='svg')
-    # plt.show()
+    # plt.savefig(graph2, format='svg')
+    plt.show()
 
 
 def main():
@@ -352,24 +355,25 @@ def main():
     sno_host_loc_df = load_df(sno_host_loc_file)
     sno_host_df = load_df(sno_host_file)
     # better but weird if removed... #CHANGED....
-    sno_host_df = sno_host_df.loc[sno_host_df.interaction_type == 'intra']
+    intra_sno_host_df = sno_host_df.loc[sno_host_df.interaction_type == 'intra']
+    not_intra_sno_host_df = sno_host_df.loc[sno_host_df.interaction_type != 'intra']
 
     sno_host_dict, prot_cod_df, sno_df = get_sno_and_host(gtf_df, sno_host_loc_df)
 
     sno_df = get_sno_intron(sno_host_dict, prot_cod_df, sno_df, sno_host_loc_df)
 
     # Get stats to make a graph
-    stats_df = get_stats(sno_df, sno_host_df)
+    stats_df = get_stats(sno_df, intra_sno_host_df)
     graph(stats_df)
 
     print('===============================================================')
 
-    graph_cumsum(sno_df, list(sno_host_df.single_id1))
+    graph_cumsum(sno_df, list(intra_sno_host_df.single_id1), list(not_intra_sno_host_df.single_id1))
 
     print('===============================================================')
     name_id_dict = dict(zip(prot_cod_df.gene_id, prot_cod_df.gene_name))
     sno_df['host_name'] = sno_df['host'].map(name_id_dict)
-    sno_df['in_net'] = np.where(sno_df.gene_id.isin(sno_host_df.single_id1),
+    sno_df['in_net'] = np.where(sno_df.gene_id.isin(intra_sno_host_df.single_id1),
                                 True,
                                 False)
     # print(sno_df[['seqname', 'start', 'end', 'gene_name',
@@ -380,12 +384,12 @@ def main():
     int_start_dict = dict(zip(sno_df.gene_id, sno_df.intron_start))
     int_end_dict = dict(zip(sno_df.gene_id, sno_df.intron_end))
 
-    sno_host_df['splicing_hypothesis'] = sno_host_df.single_id1.map(splicing_dict)
-    sno_host_df['splice_dist'] = sno_host_df.single_id1.map(distance_dict)
-    sno_host_df['intron_start'] = sno_host_df.single_id1.map(int_start_dict)
-    sno_host_df['intron_end'] = sno_host_df.single_id1.map(int_end_dict)
+    intra_sno_host_df['splicing_hypothesis'] = intra_sno_host_df.single_id1.map(splicing_dict)
+    intra_sno_host_df['splice_dist'] = intra_sno_host_df.single_id1.map(distance_dict)
+    intra_sno_host_df['intron_start'] = intra_sno_host_df.single_id1.map(int_start_dict)
+    intra_sno_host_df['intron_end'] = intra_sno_host_df.single_id1.map(int_end_dict)
 
-    sno_host_df.to_csv(out_file, sep='\t', index=False)
+    intra_sno_host_df.to_csv(out_file, sep='\t', index=False)
 
 
 if __name__ == '__main__':

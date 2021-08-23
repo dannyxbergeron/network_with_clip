@@ -28,6 +28,8 @@ rule all:
         sno_intron_coordinates = join(config['path']['sno_intron'],
                                       config['file']['sno_intron_coord']),
         merged_mfe = join(config['path']['sno_intron'], config['file']['merged_mfe']),
+        svg = '/data/articles/SNORD2_article/svgs/SNORA12_interactions.svg',
+        alternative_splicing_intron = '/data/articles/SNORD2_article/svgs/alternative_splicing_intron.svg',
 
 
 
