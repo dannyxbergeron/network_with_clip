@@ -32,7 +32,8 @@ def graph():
         ])
 
 
-    network_val_ = [(8, 68)]
+    # network_val_ = [(8, 68)] # without duplicates
+    network_val_ = [(11, 91)] # with all
     network_val = percent(network_val_)
     simulated_vals_ = [
         (19, 433),
@@ -51,6 +52,7 @@ def graph():
     lows = [network_val[0, 1], np.mean(simulated_vals[:,1])]
     highs = [network_val[0, 0], np.mean(simulated_vals[:,0])]
 
+    THRESH = 0.5
     N = 2
     ind = np.arange(N)    # the x locations for the groups
     width = 0.55       # the width of the bars: can also be len(x) sequence
@@ -58,19 +60,19 @@ def graph():
     fig1, ax = plt.subplots(figsize=(12, 8))
     # ax.bar(ind, lows, width,label=f'mean cons >= {THRESH}', color='#377eb8')
     # ax.bar(ind, highs, width, bottom=lows, label=f'mean cons >= {THRESH}', color='#e41a1c')
-    ax.bar(ind, highs, width, label=f'mean cons >= {0.5}', color='#80b1d3',
+    ax.bar(ind, highs, width, label=f'mean cons >= {THRESH}', color='#80b1d3',
             yerr=[0,.5], error_kw={'capsize' : 7})
 
 
-    plt.ylabel('% of each group')
+    plt.ylabel('Proportion with high mean conservation (%)')
     plt.title('Mean conservation of snoRNA target regions')
-    plt.xticks(ind, ('network', 'simulated'))#, rotation='vertical')
+    plt.xticks(ind, ('snoRNA interacting\nregion in host intron', 'Random'))#, rotation='vertical')
     # plt.subplots_adjust(bottom=0.2, right=0.8, left=0.08)
     # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
 
-    # plt.savefig(f'test.svg',
-    #             format='svg', transparent=True)
-    plt.show()
+    plt.savefig(snakemake.output.svg,
+                format='svg', transparent=True)
+    # plt.show()
 
     fisher_exact(network_val_, simulated_vals_)
 

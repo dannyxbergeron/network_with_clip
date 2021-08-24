@@ -121,7 +121,7 @@ rule other_conservation:
         cons = join(config['path']['sno_host_data'],
                     config['file']['cons'])
     output:
-        svg = '/data/labmeetings/host_interactions/other_conservation.svg'
+        'tok_'
     conda:
         "../envs/python.yaml"
     script:

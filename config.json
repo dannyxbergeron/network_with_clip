@@ -28,7 +28,9 @@
         "beds": "/home/danx/Documents/projects/cell_lines/results/new_annot_results/coco/bedgraph",
         "NMD": "data/NMD",
         "branchpoint": "data/branchpoint",
-        "sno_intron": "data/sno_intron"
+        "sno_intron": "data/sno_intron",
+        "intaRNA_simulation": "data/intaRNA_simulation",
+        "intaRNA_simulation_fasta": "data/intaRNA_simulation/fasta"
     },
     "file":
     {
@@ -80,7 +82,8 @@
         "best_branchpoint": "best_branchpoint.txt",
         "alt_splice_with_bp": "intra_with_alt_splicing_and_bp_info.tsv",
         "sno_intron_coord": "sno_intron_coordinates.tsv",
-        "merged_mfe": "merged_mfe.tsv"
+        "merged_mfe": "merged_mfe.tsv",
+        "intaRNA_simul_coord": "intaRNA_simulation_coordinates.tsv"
     },
     "network_file":
     {

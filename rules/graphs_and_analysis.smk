@@ -111,7 +111,7 @@ rule graph_merged:
 
 rule conservation_simulation_graph:
     output:
-        'conservation_simulation_graph.tok'
+        svg = '/data/articles/SNORD2_article/svgs/other_conservation.svg',
     conda:
         "../envs/python.yaml"
     script:
@@ -296,3 +296,14 @@ rule SNORA12_targets:
         "../envs/python_seaborn.yaml"
     script:
         "../scripts/SNORA12_targets.py"
+
+rule piechart_percentage_sno_host_intron:
+    input:
+        full_sno_host = join(config['path']['sno_host_data'],
+                             config['file']['sno_host_data'])
+    output:
+        svg = '/data/articles/SNORD2_article/svgs/piechart_percentage_sno_host_intron.svg',
+    conda:
+        "../envs/python_seaborn.yaml"
+    script:
+        "../scripts/piechart_percentage_sno_host_intron.py"

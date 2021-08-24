@@ -229,7 +229,7 @@ def main():
 
     ref_df_cons = get_cons(df, ref_df, bedgraph_df)
 
-    # graph(df, ref_df_cons)
+    graph(df, ref_df_cons)
 
 
 

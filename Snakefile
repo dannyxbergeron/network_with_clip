@@ -30,6 +30,10 @@ rule all:
         merged_mfe = join(config['path']['sno_intron'], config['file']['merged_mfe']),
         svg = '/data/articles/SNORD2_article/svgs/SNORA12_interactions.svg',
         alternative_splicing_intron = '/data/articles/SNORD2_article/svgs/alternative_splicing_intron.svg',
+        other_conservation = '/data/articles/SNORD2_article/svgs/other_conservation.svg',
+        piechart_percentage_sno_host_intron = '/data/articles/SNORD2_article/svgs/piechart_percentage_sno_host_intron.svg',
+        coords = join(config['path']['intaRNA_simulation'], config['file']['intaRNA_simul_coord']),
+        intaRNA_prediction = '/data/articles/SNORD2_article/svgs/intaRNA_simulation.svg',
 
 
 
@@ -53,3 +57,6 @@ include: "rules/branch_point_prediction.smk"
 
 # Include rules for getting mfe for folding
 include: "rules/mfe_intron_folding.smk"
+
+# Include rules for the intaRNA simulation
+include: "rules/intaRNA_simulation.smk"

@@ -314,7 +314,7 @@ def graph_cumsum(df_, intra_net_sno, not_intra_net_sno):
 
     # print(len(net_df), len(other_df))
 
-    fig, axes = plt.subplots(figsize=(12, 8))
+    fig, ax = plt.subplots(figsize=(12, 8))
     dfs = [intra_net_sno, not_intra_net_sno, other_df]
     colors = ['#377eb8', 'purple', '#e41a1c']
     labels = ['intra snoRNA-host interacting', 'not intra snoRNA-host interacting', 'snoRNA-host not interacting']
@@ -339,14 +339,19 @@ def graph_cumsum(df_, intra_net_sno, not_intra_net_sno):
 
         plt.plot(x, y, color=color, label=label, linewidth=3)
 
+    for tick in ax.xaxis.get_major_ticks():
+                tick.label.set_fontsize(16)
+    for tick in ax.yaxis.get_major_ticks():
+                tick.label.set_fontsize(16)
+
 
     # plt.grid(b=True, which='major', color='lightgray', linestyle='-')
-    plt.title('snoRNA splicing modulation potential')
-    plt.xlabel('Distance from the closest splicing event')
-    plt.ylabel('Cumulative % of snoRNA')
-    plt.legend()
-    # plt.savefig(graph2, format='svg')
-    plt.show()
+    plt.title('snoRNA splicing modulation potential', fontsize=25)
+    plt.xlabel('Closest alternative splicing event (bp)', fontsize=20)
+    plt.ylabel('Cumulative % of snoRNA', fontsize=20)
+    plt.legend(fontsize=16)
+    plt.savefig(graph2, format='svg')
+    # plt.show()
 
 
 def main():
