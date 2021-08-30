@@ -5,10 +5,12 @@ import matplotlib.pyplot as plt
 from matplotlib import style
 from statistics import mean, stdev
 
-plt.rcParams.update({'font.size': 14})
 plt.rcParams['svg.fonttype'] = 'none'
+plt.rcParams['font.sans-serif'] = ['Arial']
 
 tmp_file = snakemake.input.tpm
+
+out_svg = snakemake.output.svg
 
 
 def tpm_matrix():
@@ -18,13 +20,14 @@ def tpm_matrix():
     print(matrix_df.columns)
     matrix_df = matrix_df[['gene_id', 'gene_name',
         'HCT116_1', 'HCT116_2',
-        'INOF_1', 'MCF7_1', 'MCF7_2',
+        # 'INOF_1',
+        'MCF7_1', 'MCF7_2',
         'PC3_1', 'PC3_2',
         'SKOV_frg_1', 'SKOV_frg_2',
         # 'SKOV_nf_1', 'SKOV_nf_2',
         'TOV112D_1', 'TOV112D_2',
         'Liver_1', 'Liver_2', 'Liver_3',
-        'Breast_1', 'Breast_2', 'Breast_3', 'Breast_4',
+        'Breast_1', 'Breast_2', 'Breast_3', #'Breast_4',
         'Testis_1', 'Testis_2', 'Testis_3',
         'Prostate_1', 'Prostate_2', 'Prostate_3',
         'Ovary_1', 'Ovary_2', 'Ovary_3',
@@ -87,6 +90,11 @@ def get_new_EIF4A1():
 
 
 def graph_single(matrix_df, first_id, second_id_list):
+    columns = [
+        x.replace('brainLam', 'HBR').replace('humanRef', 'UHR')
+        for x in matrix_df.columns
+    ]
+    matrix_df.columns = columns
 
     colors = [
         '#33a02c',
@@ -111,7 +119,18 @@ def graph_single(matrix_df, first_id, second_id_list):
 
     tissues = set([x.split('_')[0] for x in matrix_df.columns[3:]])
     sorted_tissues = sorted(list(tissues))
-    print(sorted_tissues)
+
+    # To get the wanted order
+    sorted_tissues = [
+        'Brain', 'Breast', 'Liver',
+        'Ovary', 'Prostate', 'SkeletalMuscle',
+        'Testis',
+        'HCT116', 'MCF7', 'PC3',
+        'SKOV', 'TOV',
+        'HBR', 'UHR'
+    ]
+
+    fig, ax = plt.subplots(figsize=(12,8))
 
     for other_id in second_id_list:
         sno_name, sno = get_values(matrix_df, first_id)
@@ -131,7 +150,13 @@ def graph_single(matrix_df, first_id, second_id_list):
 
         coef, p_value = stats.pearsonr(sno, other)
         plt.title(
-            'correlation graph PEARSON TISSUES\n coef: {:.2f}\n p_value: {:.5f}'.format(coef, p_value))
+            'correlation graph PEARSON TISSUES\n coef: {:.2f}\n p_value: {:.5f}'.format(coef, p_value),
+            fontsize=25)
+
+        for tick in ax.xaxis.get_major_ticks():
+            tick.label.set_fontsize(16)
+        for tick in ax.yaxis.get_major_ticks():
+            tick.label.set_fontsize(16)
 
         # sdev = stdev(sorted_sno)
 
@@ -154,16 +179,15 @@ def graph_single(matrix_df, first_id, second_id_list):
         #     rep = cl.split('_')[1]
         #     plt.text(sno[i], other[i], rep, fontsize=6)
 
-        plt.xlabel(f'{sno_name} expression (tpm)')
-        plt.ylabel(f'{other_name} expression (tpm)')
-        plt.legend()
+        plt.xlabel(f'{sno_name} expression (tpm)', fontsize=20)
+        plt.ylabel(f'{other_name} expression (tpm)', fontsize=20)
+        plt.legend(fontsize=16)
 
-        plt.gcf().set_size_inches(10, 6.5)
+        # plt.gcf().set_size_inches(10, 6.5)
 
-        plt.tight_layout()
-        # plt.savefig(f'/data/labmeetings/host_interactions/SNORD2_EIF4A2_corr_with_cell_lines.svg',
-        #             format='svg', transparent=True)
-        plt.show()
+        # plt.tight_layout()
+        plt.savefig(out_svg, format='svg')
+        # plt.show()
         plt.close()
 
 

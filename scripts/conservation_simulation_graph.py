@@ -55,9 +55,9 @@ def graph():
     THRESH = 0.5
     N = 2
     ind = np.arange(N)    # the x locations for the groups
-    width = 0.55       # the width of the bars: can also be len(x) sequence
+    width = 0.75       # the width of the bars: can also be len(x) sequence
 
-    fig1, ax = plt.subplots(figsize=(12, 8))
+    fig1, ax = plt.subplots(figsize=(8, 8))
     # ax.bar(ind, lows, width,label=f'mean cons >= {THRESH}', color='#377eb8')
     # ax.bar(ind, highs, width, bottom=lows, label=f'mean cons >= {THRESH}', color='#e41a1c')
     ax.bar(ind, highs, width, label=f'mean cons >= {THRESH}', color='#80b1d3',
@@ -70,8 +70,7 @@ def graph():
     # plt.subplots_adjust(bottom=0.2, right=0.8, left=0.08)
     # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
 
-    plt.savefig(snakemake.output.svg,
-                format='svg', transparent=True)
+    plt.savefig(snakemake.output.svg, format='svg')
     # plt.show()
 
     fisher_exact(network_val_, simulated_vals_)

@@ -137,17 +137,6 @@ rule sankey:
     script:
         "../scripts/sankey.py"
 
-rule pearson_correlation:
-    input:
-        tpm = join(config['path']['count_matrices'],
-                   config['file']['coco_tpm']),
-    output:
-        'pearson_corr.tok'
-    conda:
-        "../envs/python_scikit.yaml"
-    script:
-        "../scripts/pearson_correlation.py"
-
 
 rule get_significant_NMD:
     input:
@@ -307,3 +296,25 @@ rule piechart_percentage_sno_host_intron:
         "../envs/python_seaborn.yaml"
     script:
         "../scripts/piechart_percentage_sno_host_intron.py"
+
+rule pearson_correlation:
+    input:
+        tpm = join(config['path']['count_matrices'],
+                   config['file']['coco_tpm']),
+    output:
+        svg = '/data/articles/SNORD2_article/svgs/SNORD2_EIF4A2_correlation.svg',
+    conda:
+        "../envs/python_scikit.yaml"
+    script:
+        "../scripts/pearson_correlation.py"
+
+rule SNORD2_intron_psi_cov:
+    input:
+        psi_ext = '/home/danx/Documents/projects/bam_reads_viz/results/merged_psi_ext/EIF4A2/merged_psi_ext.tsv'
+    output:
+        svg_SNORD2 = '/data/articles/SNORD2_article/svgs/SNORD2_psi_ext.svg',
+        svg_SNORD2_intron = '/data/articles/SNORD2_article/svgs/SNORD2_intron_psi_ext.svg',
+    conda:
+        "../envs/python_scikit.yaml"
+    script:
+        "../scripts/SNORD2_intron_psi_cov.py"

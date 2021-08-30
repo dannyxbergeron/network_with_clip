@@ -68,9 +68,11 @@ def graph(df):
 
     TRESH = 1000 # Remove higher values as it gives a ugly plot...
     df['dist'] = np.where(df.dist > TRESH, TRESH, df.dist)
+
+
     fig, ax = plt.subplots(figsize=(12,8))
     sns.kdeplot(data=df.dist, shade=True, linewidth=1, alpha=.3,
-                label='distance', ax=ax, color='green')
+                label='distance', ax=ax, color='#D45D4C', bw=25)
 
 
     tick_labels = [
@@ -81,11 +83,16 @@ def graph(df):
     tick_labels[-2] = str(tick_labels[-2]) + '+'
     ax.set_xticklabels(tick_labels)
 
-    plt.title('Distribution of distance of the target region from the snoRNA', size=15)
-    plt.xlabel('Distance of the target region from the snoRNA', size=12)
-    plt.ylabel('Density of snoRNA interaction', size=12)
+    for tick in ax.xaxis.get_major_ticks():
+        tick.label.set_fontsize(16)
+    for tick in ax.yaxis.get_major_ticks():
+            tick.label.set_fontsize(16)
+
+    plt.title('Distribution of distance of the target region from the snoRNA', size=25)
+    plt.xlabel('Distance of the target region from the snoRNA', size=20)
+    plt.ylabel('Density of snoRNA interaction', size=20)
     # plt.show()
-    plt.savefig(out_file, format='svg', transparent=True)
+    plt.savefig(out_file, format='svg')
 
 
 def main():

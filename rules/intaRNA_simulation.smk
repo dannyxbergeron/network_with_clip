@@ -30,7 +30,8 @@ rule intaRNA_prediction:
         coords = join(config['path']['intaRNA_simulation'],
                       config['file']['intaRNA_simul_coord'])
     output:
-        svg = '/data/articles/SNORD2_article/svgs/intaRNA_simulation.svg',
+        svg = '/data/articles/SNORD2_article/svgs/intaRNA_simulation_distribution.svg',
+        cumsum_svg = '/data/articles/SNORD2_article/svgs/intaRNA_simulation_cumsum.svg',
     params:
         fasta_dir = config['path']['intaRNA_simulation_fasta']
     conda:

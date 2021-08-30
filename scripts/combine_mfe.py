@@ -4,6 +4,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+plt.rcParams['svg.fonttype'] = 'none'
+plt.rcParams['font.sans-serif'] = ['Arial']
+
 sno_intron_coord_file = snakemake.input.sno_intron_coordinates
 inputs = snakemake.input.mfe_files
 sno_host_loc_file = snakemake.input.sno_host_loc
@@ -47,17 +50,25 @@ def graph(df_):
                         & (df.side == 'downstream')]
 
     groups = [
-        'Intra observed', 'Intra_other_side',
-        'Others upstream', 'Others Downstream'
+        'SnoRNA intron',
+        'Matched negative',
     ]
-    colors = ['#4daf4a', '#e41a1c', '#377eb8', '#b15928']
+    colors = [
+        '#4CB5D4',
+        '#DE523E',
+    ]
 
-    data = [intra_good, intra_bad, others_up, others_down]
+    datas = [
+        intra_good.mfe_norm,
+        np.concatenate((others_up.mfe_norm.values,
+                        others_down.mfe_norm.values),
+                        axis=0)
+    ]
 
-    fig, ax = plt.subplots(figsize=(12,10))
+    fig, ax = plt.subplots(figsize=(12,8))
 
-    for label, data, color in zip(groups, data, colors):
-        sns.kdeplot(data=data.mfe_norm, shade=True, linewidth=1, alpha=.3,
+    for label, data, color in zip(groups, datas, colors):
+        sns.kdeplot(data=data, shade=True, linewidth=1, alpha=.3,
                     label=label, ax=ax, bw=.025,
                     color=color)
 
@@ -69,10 +80,15 @@ def graph(df_):
     # tick_labels[-2] = str(tick_labels[-2]) + '+'
     # ax.set_xticklabels(tick_labels)
 
-    plt.title('MFE per bp of snoRNA-intron for the different groups', fontsize=18)
-    plt.xlabel('Normalize mfe (mfe/length)', fontsize=15)
-    plt.ylabel('Distribution', fontsize=15)
-    legend = plt.legend(fontsize=12)
+    for tick in ax.xaxis.get_major_ticks():
+        tick.label.set_fontsize(16)
+    for tick in ax.yaxis.get_major_ticks():
+        tick.label.set_fontsize(16)
+
+    plt.title('MFE per bp of snoRNA-intron for the different groups', fontsize=25)
+    plt.xlabel('Normalize mfe (mfe/length)', fontsize=20)
+    plt.ylabel('Distribution of snoRNA-intron', fontsize=20)
+    legend = plt.legend(fontsize=16)
 
     # ============= STATS ==================
     from scipy.stats import mannwhitneyu as mwu

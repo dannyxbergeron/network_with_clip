@@ -28,12 +28,15 @@ rule all:
         sno_intron_coordinates = join(config['path']['sno_intron'],
                                       config['file']['sno_intron_coord']),
         merged_mfe = join(config['path']['sno_intron'], config['file']['merged_mfe']),
+        mfe_svg = '/data/articles/SNORD2_article/svgs/mfe_plot.svg',
         svg = '/data/articles/SNORD2_article/svgs/SNORA12_interactions.svg',
         alternative_splicing_intron = '/data/articles/SNORD2_article/svgs/alternative_splicing_intron.svg',
         other_conservation = '/data/articles/SNORD2_article/svgs/other_conservation.svg',
         piechart_percentage_sno_host_intron = '/data/articles/SNORD2_article/svgs/piechart_percentage_sno_host_intron.svg',
         coords = join(config['path']['intaRNA_simulation'], config['file']['intaRNA_simul_coord']),
-        intaRNA_prediction = '/data/articles/SNORD2_article/svgs/intaRNA_simulation.svg',
+        intaRNA_prediction = '/data/articles/SNORD2_article/svgs/intaRNA_simulation_distribution.svg',
+        snord2_eif4a2_corr_svg = '/data/articles/SNORD2_article/svgs/SNORD2_EIF4A2_correlation.svg',
+        svg_SNORD2_intron = '/data/articles/SNORD2_article/svgs/SNORD2_intron_psi_ext.svg',
 
 
 
