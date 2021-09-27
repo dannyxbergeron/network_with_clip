@@ -19,7 +19,9 @@ sno_host_file = snakemake.input.sno_host_loc
 bedgraph_file = snakemake.input.bedgraph
 data_file = snakemake.input.cons
 
-svg = snakemake.output.svg
+# svg = snakemake.output.svg
+
+THRESH = snakemake.params.threshold
 
 
 def load_df(file):
@@ -144,6 +146,8 @@ def get_cons(data_df, df, bedgraph_df):
     colnames = ['chr', 'start', 'end', 'gene_id', 'gene_name', 'strand']
     bt_df = pd.DataFrame(bt_list, columns=colnames)
     bt_df.sort_values(['chr', 'start', 'end'], inplace=True)
+    print(df)
+    print(bt_df)
 
     intersect_df = bedtools(bt_df, bedgraph_df)
 
@@ -184,7 +188,7 @@ def graph(df, ref_df_cons):
     def get_vals(list_):
         pos, neg = 0, 0
         for v in list_:
-            if v >= 0.5: pos += 1
+            if v >= THRESH: pos += 1
             else: neg +=1
         return pos, neg
 

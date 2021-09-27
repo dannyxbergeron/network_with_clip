@@ -66,6 +66,7 @@
         "host_ref": "host_ref.bed",
         "pearson": "pearson.tsv",
         "bio_function": "protein_coding_host_biological_functions.tsv",
+        "bio_function_completed": "protein_coding_host_biological_functions_completed.tsv",
         "cons": "sno_host_with_cons.tsv",
         "alt_splice": "intra_with_alt_splicing_info.tsv",
         "introns_sno_in_host": "introns_sno_in_host.bed",

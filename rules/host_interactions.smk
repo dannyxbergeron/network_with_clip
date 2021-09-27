@@ -122,6 +122,8 @@ rule other_conservation:
                     config['file']['cons'])
     output:
         'tok_'
+    params:
+        threshold = 0.5
     conda:
         "../envs/python.yaml"
     script:
@@ -138,8 +140,10 @@ rule other_conservation_bootstrap:
                     config['file']['cons'])
     output:
         'tok'
+    params:
+        threshold = 0.5
     threads:
-        8
+        6
     conda:
         "../envs/python.yaml"
     script:
@@ -156,7 +160,8 @@ rule transcript_per_gene:
         sno_host = join(config['path']['sno_host_data'],
                         config['file']['sno_host_data']),
     output:
-        svg = '/data/labmeetings/host_interactions/transcript_per_gene.svg'
+        # svg = '/data/labmeetings/host_interactions/transcript_per_gene.svg'
+        svg =  '/data/articles/SNORD2_article/svgs/transcript_per_gene.svg',
     conda:
         "../envs/python.yaml"
     script:

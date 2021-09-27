@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+import scipy.stats as stats
+
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
@@ -28,6 +30,13 @@ def load_df(file):
     df = pd.read_csv(file, sep='\t')
     return df
 
+def fisher_test(cond1_pos, cond1_neg, cond2_pos, cond2_neg):
+    print('----------------- Fisher exact test ---------------------')
+    obs = np.array([[cond1_pos, cond1_neg], [cond2_pos, cond2_neg]])
+    odds, p_val = stats.fisher_exact(obs)
+    print(f'Odds: {odds:.2f}, pValue: {p_val:.5f}')
+    print('-------------------------------------------------------\n')
+
 def get_ids(df, network_df, loc_df):
 
     sno_interacting = set(df.single_id1)
@@ -49,26 +58,33 @@ def analyse_can_targets(all_sno_interating, others, snodb_df):
     def get_percent(ids, can_sno):
         ids_set = set(ids)
         can_sno_set = set(can_sno)
-        total = len(ids_set)
         intersect = ids_set.intersection(can_sno_set)
-        return len(intersect) / total * 100
+        total = len(ids_set)
+        percent_can = len(intersect) / total * 100
+        can_pos = len(intersect)
+        can_neg = total - can_pos
+        return percent_can, can_pos, can_neg
 
-
+    print('================ Canonical targets ====================')
     snodb_df = snodb_df[[
         'gene_id_annot2020', 'rrna', 'snrna'
     ]].copy(deep=True)
     snodb_df.dropna(thresh=2, inplace=True)
-    cannonical_snoRNA = list(snodb_df.gene_id_annot2020)
+    canonical_snoRNA = list(snodb_df.gene_id_annot2020)
 
-    all_sno_interating = get_percent(all_sno_interating, cannonical_snoRNA)
-    others_percent = get_percent(others, cannonical_snoRNA)
+    all_sno_interating, all_pos, all_neg = get_percent(all_sno_interating, canonical_snoRNA)
+    others_percent, others_pos, others_neg = get_percent(others, canonical_snoRNA)
 
-    print(f'All snoRNA interacting % of cannonical: {all_sno_interating:.1f}%')
-    print(f'Others % of cannonical: {others_percent:.1f}%')
+    # Fisher exact test
+    fisher_test(all_pos, all_neg, others_pos, others_neg)
+
+    print(f'All snoRNA interacting % of canonical: {all_sno_interating:.1f}%')
+    print(f'Others % of canonical: {others_percent:.1f}%')
+    print('=======================================================\n')
 
     return ['SnoRNA interacting\nwith their host', 'Others'], [all_sno_interating, others_percent]
 
-def graph_cannonical(names, data):
+def graph_canonical(names, data):
 
     total = [[100] for x in data]
     data = [[x] for x in data]
@@ -89,7 +105,7 @@ def graph_cannonical(names, data):
     for tick in ax.yaxis.get_major_ticks():
                 tick.label.set_fontsize(AXIS_TICK_SIZE)
 
-    plt.title('Number of cannonical snoRNA\nin the different groups', size=TITLE_SIZE)
+    plt.title('Number of canonical snoRNA\nin the different groups', size=TITLE_SIZE)
     plt.xlabel('Groups', size=AXIS_LABEL_SIZE)
     plt.ylabel('Percentage of snoRNAs', size=AXIS_LABEL_SIZE)
 
@@ -104,7 +120,7 @@ def graph_cannonical(names, data):
 def prepare_data(all_sno_interating, others, loc_df, bio_func_df):
 
     def put_in_df(ids, name):
-        tmp = pd.DataFrame(ids, columns=['gene_id'])
+        tmp = pd.DataFrame(ids, columns=['gene_id']).copy(deep=True)
         tmp['group'] = name
         return tmp
 
@@ -117,7 +133,20 @@ def prepare_data(all_sno_interating, others, loc_df, bio_func_df):
                                                                    loc_df.host_id)))
     master_df['host_function'] = master_df.host_id.map(dict(zip(bio_func_df.host_id,
                                                                 bio_func_df.host_function)))
-    master_df['host_function'] = master_df['host_function'].fillna('Not investigated')
+    # print('\n$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
+    # print(loc_df.columns)
+    # name_dict = dict(zip(loc_df.host_id, loc_df.host_name))
+    # id_list = []
+    # name_list = []
+    # for id in master_df.loc[pd.isnull(master_df.host_function)].host_id.values:
+    #     id_list.append(id)
+    #     name_list.append(name_dict[id])
+    #
+    # print('\n'.join(id_list))
+    # print('-------------')
+    # print('\n'.join(name_list))
+    # print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n')
+    # master_df['host_function'] = master_df['host_function'].fillna('Not investigated')
 
     master_df_gb = master_df[['group', 'host_function', 'gene_id']]\
                         .groupby(['group', 'host_function'])\
@@ -128,6 +157,15 @@ def prepare_data(all_sno_interating, others, loc_df, bio_func_df):
                                                                 total_pergroup.gene_id)))
     master_df_gb['percentage_func'] = master_df_gb['gene_id'] / master_df_gb['sum_group'] * 100
     master_df_gb = master_df_gb.round({'percentage_func': 1})
+
+    print(master_df_gb)
+    # Fisher exact test
+    for function in sorted(list(set(master_df_gb.host_function.values))):
+        print(function)
+        tmp = master_df_gb.loc[master_df_gb.host_function == function].copy(deep=True)
+        tmp['neg'] = tmp.sum_group - tmp.gene_id
+        data = tmp[['gene_id', 'neg']].values.ravel()
+        fisher_test(*data)
 
     return master_df_gb, master_df_original
 
@@ -140,7 +178,7 @@ def graph_bio_functions(data_df):
         'RNA binding, processing, splicing',
         'poorly characterized',
         'Other',
-        'Not investigated'
+        # 'Not investigated'
     ]
     colors = [
         '#80b1d3',
@@ -153,7 +191,7 @@ def graph_bio_functions(data_df):
     ]
 
 
-    print(host_fct)
+    print('\n'.join(host_fct))
 
     fig, ax = plt.subplots(1, figsize=(10, 8))
     x = np.arange(len(groups))  # the label locations
@@ -214,6 +252,9 @@ def graph_box_type(data_df_):
     labels = ['SnoRNA interacting\nwith their host', 'Others']
 
     print(data_df)
+    # Fisher exact test
+    values = data_df.gene_id.values
+    fisher_test(*values)
 
     total = data_df.groupby('group').sum().reset_index()
     cd = data_df.loc[data_df.box_type == 'C/D']
@@ -264,7 +305,7 @@ def main():
     # Analyse all snoRNA interacting with their host together
     names, data = analyse_can_targets(all_sno_interating, others, snodb_df)
 
-    graph_cannonical(names, data)
+    graph_canonical(names, data)
 
     # Bio function graph
     print('\n============================== Bio function analysis ==============================\n')

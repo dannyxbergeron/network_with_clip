@@ -327,8 +327,8 @@ def prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS, strand):
 
         ax.hlines(yloc, t_start, t_end, color='#a6bddb')
         ax.text(0, yloc + 0.4 * STEPS,
-                # '{}'.format(t_name),
-                '{} ({})'.format(t_name, biot),
+                '{}'.format(t_name),
+                # '{} ({})'.format(t_name, biot),
                 # '{} ({}) tsl{} {}'.format(t_id, biot, int(tsl), t_name),
                 fontsize=FONTSIZE)
 
@@ -364,14 +364,14 @@ def prepare_fig(ref_df, sno_data, sno_in_host, TPM_VALS, strand):
     ax.set_title(f'{gene_name} (strand {strand})')
 
     plt.tight_layout()
-    plt.savefig('/data/predoc/presentation/PCAT4_SNORA75.svg',
+    plt.savefig('/data/articles/SNORD2_article/svgs/LARP4_full_transcripts.svg',
                 format='svg')
     # plt.show()
 
 
 def main():
 
-    GOI = 'PCAT4'
+    GOI = 'LARP4'
     TPM_VALS = False
     ref_df, sno_in_host, strand = load_ref(GOI)
 

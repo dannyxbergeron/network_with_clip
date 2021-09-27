@@ -37,6 +37,8 @@ rule all:
         intaRNA_prediction = '/data/articles/SNORD2_article/svgs/intaRNA_simulation_distribution.svg',
         snord2_eif4a2_corr_svg = '/data/articles/SNORD2_article/svgs/SNORD2_EIF4A2_correlation.svg',
         svg_SNORD2_intron = '/data/articles/SNORD2_article/svgs/SNORD2_intron_psi_ext.svg',
+        intron_length = '/data/articles/SNORD2_article/svgs/snoRNA_intron_length.svg',
+
 
 
 

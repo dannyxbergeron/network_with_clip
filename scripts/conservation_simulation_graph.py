@@ -35,6 +35,7 @@ def graph():
     # network_val_ = [(8, 68)] # without duplicates
     network_val_ = [(11, 91)] # with all
     network_val = percent(network_val_)
+    # Simulated with 0.5
     simulated_vals_ = [
         (19, 433),
         (17, 435),
@@ -47,12 +48,28 @@ def graph():
         (15, 437),
         (18, 434)
     ]
+    # --------------------------------------------
+    # Simulated with 0.2
+    # network_val_ = [(16, 86)]
+    # simulated_vals_ = [
+    #     (57, 395),
+    #     (47, 405),
+    #     (59, 393),
+    #     (62, 390),
+    #     (51, 401),
+    #     (57, 395),
+    #     (48, 404),
+    #     (57, 395),
+    #     (56, 396),
+    #     (63, 389)
+    # ]
+    # --------------------------------------------
     simulated_vals = percent(simulated_vals_)
 
     lows = [network_val[0, 1], np.mean(simulated_vals[:,1])]
     highs = [network_val[0, 0], np.mean(simulated_vals[:,0])]
 
-    THRESH = 0.5
+    THRESH = 0.2
     N = 2
     ind = np.arange(N)    # the x locations for the groups
     width = 0.75       # the width of the bars: can also be len(x) sequence

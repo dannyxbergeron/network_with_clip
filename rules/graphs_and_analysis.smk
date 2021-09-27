@@ -258,7 +258,7 @@ rule cannonical_targets:
         snodb = join(config['path']['ref'],
                      config['file']['snoDB']),
         bio_function = join(config['path']['ref'],
-                            config['file']['bio_function']),
+                            config['file']['bio_function_completed']),
     output:
         svg_can_targets = '/data/articles/SNORD2_article/svgs/cannonical_targets.svg',
         svg_bio_functions = '/data/articles/SNORD2_article/svgs/bio_functions.svg',
@@ -318,3 +318,16 @@ rule SNORD2_intron_psi_cov:
         "../envs/python_scikit.yaml"
     script:
         "../scripts/SNORD2_intron_psi_cov.py"
+
+rule snoRNA_intron_length:
+    input:
+        sno_host_loc = join(config['path']['ref'],
+                            config['file']['prot_cod_sno_host_loc']),
+        full_sno_host = join(config['path']['sno_host_data'],
+                             config['file']['sno_host_data'])
+    output:
+        svg = '/data/articles/SNORD2_article/svgs/snoRNA_intron_length.svg',
+    conda:
+        "../envs/python_seaborn.yaml"
+    script:
+        "../scripts/snoRNA_intron_length.py"

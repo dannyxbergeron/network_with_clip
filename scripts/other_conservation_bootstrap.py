@@ -13,6 +13,9 @@ sno_host_file = snakemake.input.sno_host_loc
 bedgraph_file = snakemake.input.bedgraph
 data_file = snakemake.input.cons
 
+
+THRESH = snakemake.params.threshold
+
 # sno_host_file = 'prot_cod_sno_host_loc.tsv'
 # bedgraph_file = 'simplified_host_bedgraph.bedgraph'
 # data_file = 'sno_host_with_cons.tsv'
@@ -143,7 +146,7 @@ def stats(df, ref_df_cons):
         def get_vals(list_):
             pos, neg = 0, 0
             for v in list_:
-                if v >= 0.5: pos += 1
+                if v >= THRESH: pos += 1
                 else: neg +=1
             return pos, neg
         vals = get_vals(original_list)
@@ -183,7 +186,7 @@ def main():
 
     # ========================= MULTIPROCESSING ==========================
     N = 16
-    CORES = 4
+    CORES = 6
     pool = mp.Pool(processes = CORES)
 
     # Map apply_func function with data and my_function to cores
